@@ -4,6 +4,7 @@ using Kakia.TW.Shared.World;
 using Kakia.TW.World.Entities;
 using Kakia.TW.World.Network;
 using Kakia.TW.World.Scripting;
+using System;
 using System.IO;
 using System.Text;
 using Yggdrasil.Logging;
@@ -75,6 +76,8 @@ namespace Kakia.TW.World.Commands
 			this.Add("testwait", "[ms]", "Test dialog wait (0x05 0x05)", this.HandleTestWait);
 			this.Add("testnoveltalk", "", "Test novel talk with params (0x05 0x02)", this.HandleTestNovelTalk);
 			this.Add("testchoices", "", "Test RE-style menu (0x05 0x04)", this.HandleTestChoices);
+			this.Add("weather", "<off|rain|snow> [speed] [direction] [intensity]", "Sends 0x1F 0x04 environmental weather.", this.HandleWeather);
+			this.Add("fog", "<on|off>", "Sends 0x1F 0x04 fog toggle.", this.HandleFog);
 
 			this.AddAlias("testdialog", "td");
 			this.AddAlias("testdialogmenu", "tdm");
@@ -130,7 +133,7 @@ namespace Kakia.TW.World.Commands
 			};
 
 			sender.Instance.AddNpc(npc, true);
-			Send.SpawnHardcoded(sender.Connection, npc);
+			Send.SpawnNpc(sender.Connection, npc);
 
 			return CommandResult.Okay;
 		}
@@ -344,7 +347,7 @@ namespace Kakia.TW.World.Commands
 			};
 
 			sender.Instance.AddNpc(npc, true);
-			Send.SpawnHardcoded(sender.Connection, npc);
+			Send.SpawnNpc(sender.Connection, npc);
 			Msg(sender, "Spawned RE Test NPC. Click it to test new dialog commands.");
 
 			return CommandResult.Okay;
@@ -432,6 +435,79 @@ namespace Kakia.TW.World.Commands
 				"Cancel"
 			});
 			Msg(sender, "Sent NpcChoices (0x05 0x04). Check if menu appears.");
+			return CommandResult.Okay;
+		}
+
+		private CommandResult HandleWeather(Player sender, Player target, string message, string commandName, Arguments args)
+		{
+			if (sender.Instance == null)
+				return CommandResult.Fail;
+
+			if (args.Count < 1)
+			{
+				Msg(sender, "Usage: >weather <off|rain|snow> [speed] [direction] [intensity]");
+				return CommandResult.InvalidArgument;
+			}
+
+			var mode = args.Get(0).ToLowerInvariant();
+			byte type = mode switch
+			{
+				"off" => 0,
+				"rain" => 2,
+				"snow" => 3,
+				_ => 0xFF,
+			};
+
+			if (type == 0xFF)
+			{
+				Msg(sender, "Mode must be one of: off, rain, snow");
+				return CommandResult.InvalidArgument;
+			}
+
+			byte speed = 1;
+			byte direction = 1;
+			byte intensity = type == 0 ? (byte)0 : (byte)1;
+
+			if (args.Count > 1 && byte.TryParse(args.Get(1), out var parsedSpeed))
+				speed = parsedSpeed;
+			if (args.Count > 2 && byte.TryParse(args.Get(2), out var parsedDirection))
+				direction = parsedDirection;
+			if (args.Count > 3 && byte.TryParse(args.Get(3), out var parsedIntensity))
+				intensity = parsedIntensity;
+
+			Send.Environment(sender.Instance, type, speed, direction, intensity);
+			Msg(sender, $"Environment sent: type={type}, speed={speed}, direction={direction}, intensity={intensity}");
+
+			return CommandResult.Okay;
+		}
+
+		private CommandResult HandleFog(Player sender, Player target, string message, string commandName, Arguments args)
+		{
+			if (sender.Instance == null)
+				return CommandResult.Fail;
+
+			if (args.Count < 1)
+			{
+				Msg(sender, "Usage: >fog <on|off>");
+				return CommandResult.InvalidArgument;
+			}
+
+			var on = args.Get(0).Equals("on", StringComparison.OrdinalIgnoreCase);
+			if (!on && !args.Get(0).Equals("off", StringComparison.OrdinalIgnoreCase))
+			{
+				Msg(sender, "Usage: >fog <on|off>");
+				return CommandResult.InvalidArgument;
+			}
+
+			// Matches observed packets:
+			// on  = 1F 04 01 01 01 01
+			// off = 1F 04 00 00 00 00
+			if (on)
+				Send.Environment(sender.Instance, 1, 1, 1, 1);
+			else
+				Send.Environment(sender.Instance, 0, 0, 0, 0);
+
+			Msg(sender, $"Fog {(on ? "enabled" : "disabled")}.");
 			return CommandResult.Okay;
 		}
 
@@ -543,7 +619,7 @@ namespace Kakia.TW.World.Commands
 		{
 			if (target.Connection != null)
 			{
-				Send.SpawnUser(target.Connection, target.Data, isSelf: true);
+				Send.SpawnUser(target.Connection, target.ObjectId, target.Data, isSelf: true);
 				Msg(sender, "Character refreshed.");
 			}
 			return CommandResult.Okay;

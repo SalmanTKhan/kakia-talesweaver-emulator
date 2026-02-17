@@ -22,9 +22,12 @@ namespace Kakia.TW.Shared.Network
 			Register(Op.UserPositionResponse, 0x0B, Dynamic);
 			Register(Op.ChatResponse, 0x0D, Dynamic);
 			Register(Op.MapChangeResponse, 0x15, Dynamic);
+			Register(Op.SkillListResponse, 0x16, Dynamic);
+			Register(Op.EnvironmentResponse, 0x1F, Dynamic);
 			Register(Op.DialogResponse, 0x17, Dynamic);
 			Register(Op.MetaFilesResponse, 0x18, Dynamic);
 			Register(Op.LoginSecurityResponse, 0x3C, Dynamic);
+			Register(Op.AttackTargetResponse, 0x3F, Dynamic);
 			Register(Op.FriendDialogResponse, 0x44, Dynamic);
 			Register(Op.AttackResultResponse, 0x48, Dynamic);
 			Register(Op.LoginResponse, 0x50, Dynamic);
@@ -37,6 +40,7 @@ namespace Kakia.TW.Shared.Network
 			// Server -> Client acknowledgments
 			Register(Op.HandshakeAck, 0x68, Dynamic);
 			Register(Op.AttackAck, 0x4A, Dynamic);
+			Register(Op.LoadCompleteAck, 0x4D, Dynamic);
 			Register(Op.EntityClickAck, 0x70, Dynamic);
 
 			// Entity Interaction packets (used during NPC dialog)
@@ -52,23 +56,31 @@ namespace Kakia.TW.Shared.Network
 			Register(Op.DirectionUpdateRequest, 0x11, Dynamic);
 			Register(Op.AttackRequest, 0x13, Dynamic);
 			Register(Op.TriggerRequest, 0x1B, Dynamic);
+			Register(Op.Unknown21Request, 0x21, Dynamic);
 			Register(Op.CheckNameRequest, 0x28, Dynamic);
 			Register(Op.CharacterInfoUpdateRequest, 0x2A, Dynamic);
 			Register(Op.SelectCharacterRequest, 0x2B, Dynamic);
 			Register(Op.CreateCharacterRequest, 0x2C, Dynamic);
+			Register(Op.Unknown2ERequest, 0x2E, Dynamic);
 			Register(Op.SetPoseRequest, 0x32, Dynamic);
 			Register(Op.MovementRequest, 0x33, Dynamic);
 			Register(Op.UiActionRequest, 0x37, Dynamic);
 			Register(Op.Unknown39Request, 0x39, Dynamic);
+			Register(Op.Unknown3DRequest, 0x3D, Dynamic);
 			Register(Op.EntityClickRequest, 0x43, Dynamic);
 			Register(Op.Unknown45Request, 0x45, Dynamic);
 			Register(Op.Unknown51Request, 0x51, Dynamic);
 			Register(Op.Unknown55Request, 0x55, Dynamic);
+			Register(Op.TargetEntityRequest, 0x59, Dynamic);
 			Register(Op.Unknown5FRequest, 0x5F, Dynamic);
 			Register(Op.Unknown60Request, 0x60, Dynamic);
+			Register(Op.Unknown63Request, 0x63, Dynamic);
 			Register(Op.LoginRequest, 0x66, Dynamic);
 			Register(Op.ServerSelectRequest, 0x67, Dynamic);
+			Register(Op.Unknown6ARequest, 0x6A, Dynamic);
 			Register(Op.NpcDialogAnswerRequest, 0x6C, Dynamic);
+			Register(Op.Unknown77Request, 0x77, Dynamic);
+			Register(Op.AttackStart, 0xB4, Dynamic);
 			// Note: DebugSourceLineRequest uses 0x7C which conflicts with CreateCharacterResponse
 			// Handler still works - the packet direction determines which handler is called
 		}

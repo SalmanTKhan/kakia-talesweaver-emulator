@@ -1,15 +1,17 @@
-﻿using kakia_talesweaver_emulator.Models;
+﻿using Kakia.TW.Shared.Network;
+using kakia_talesweaver_emulator.Models;
 using kakia_talesweaver_emulator.Network;
 using kakia_talesweaver_emulator.PacketHandlers;
 using kakia_talesweaver_logging;
 using kakia_talesweaver_utils.Extensions;
+using System;
 using System.Collections.Concurrent;
 using System.Text;
 
 PacketHandlers.LoadPacketHandlers("kakia_talesweaver_emulator.PacketHandlers");
 Logger.SetLogLevel(LogLevel.Debug);
 
-ConcurrentDictionary<uint, SessionInfo> accountSessions  = new();
+ConcurrentDictionary<uint, SessionInfo> accountSessions = new();
 
 string listenIp = "127.0.0.1";
 
@@ -63,7 +65,7 @@ Task.WaitAll(serverTasks);
 void SendInputPacket(string input)
 {
 	var packet = input.ToByteArray();
-	foreach(var p in loginServer.ConnectedPlayers.Values)
+	foreach (var p in loginServer.ConnectedPlayers.Values)
 		TrySend(p, packet);
 
 	foreach (var p in lobbyServer.ConnectedPlayers.Values)
@@ -75,6 +77,10 @@ void SendInputPacket(string input)
 
 void TrySend(IPlayerClient pc, byte[] packet)
 {
-	try	{ pc.Send(packet, CancellationToken.None).Wait(); }
-	catch (Exception ex) {	}
+	try
+	{
+		PaleLogger.Log(false, packet);
+		pc.Send(packet, CancellationToken.None).Wait();
+	}
+	catch (Exception ex) { }
 }

@@ -4,6 +4,7 @@ using Kakia.TW.World.Managers;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Yggdrasil.Logging;
 
 namespace Kakia.TW.World.Scripting
 {
@@ -42,6 +43,45 @@ namespace Kakia.TW.World.Scripting
 				};
 				map.AddWarp(warp);
 			}
+		}
+
+		/// <summary>
+		/// Adds a warp portal defined by a trigger area (minX,minY)-(maxX,maxY).
+		/// The warp entity is placed at the center of the area.
+		/// </summary>
+		public static Warp AddWarp(ushort mapId, ushort zoneId, ushort minX, ushort minY, ushort maxX, ushort maxY, ushort destMapId, ushort destZoneId, ushort destX, ushort destY, byte destDirection = 0)
+		{
+			var map = WorldServer.Instance.World.Maps.GetOrCreateMap(mapId, zoneId);
+			if (map == null)
+			{
+				Log.Warning($"NpcScript: Cannot add warp - Map {mapId}-{zoneId} not found.");
+				return null;
+			}
+
+			// Place the warp entity at the center of the trigger area
+			var cx = (ushort)((minX + maxX) / 2);
+			var cy = (ushort)((minY + maxY) / 2);
+
+			var warp = new Warp()
+			{
+				Position = new Position(cx, cy),
+				DestMapId = destMapId,
+				DestZoneId = destZoneId,
+				DestX = destX,
+				DestY = destY,
+				// Area bounds for trigger detection
+				MinX = minX,
+				MinY = minY,
+				MaxX = maxX,
+				MaxY = maxY,
+				DestDirection = destDirection,
+			};
+
+			map.AddWarp(warp);
+
+			Log.Debug($"Added area Warp (ObjectId: {warp.ObjectId}) at {mapId}-{zoneId} area ({minX},{minY})-({maxX},{maxY}) -> {destMapId}-{destZoneId} ({destX},{destY}) dir:{destDirection}");
+
+			return warp;
 		}
 	}
 }

@@ -1,0 +1,235 @@
+{
+  "items": [
+    {
+      "id": 1001,
+      "name": "Training Sword",
+      "type": "Weapon",
+      "slot": "Weapon",
+      "price": 100,
+      "maxStack": 1,
+      "minDamage": 5,
+      "maxDamage": 10,
+      "weaponType": "Sword",
+      "description": "A basic training sword for beginners.",
+      "levelRequirement": 1,
+      "classRestriction": "All",
+      "visualModelId": 1001,
+      "durability": 100,
+      "bonusStats": {},
+      "dropSources": [
+        { "monsterId": 101, "rate": 5.0 }
+      ]
+    },
+    {
+      "id": 1002,
+      "name": "Iron Sword",
+      "type": "Weapon",
+      "slot": "Weapon",
+      "price": 500,
+      "maxStack": 1,
+      "minDamage": 15,
+      "maxDamage": 25,
+      "weaponType": "Sword",
+      "description": "A sturdy iron sword.",
+      "levelRequirement": 10,
+      "classRestriction": "All",
+      "visualModelId": 1002,
+      "durability": 150,
+      "bonusStats": {
+        "Stab": 3
+      },
+      "dropSources": [
+        { "monsterId": 102, "rate": 3.0 }
+      ]
+    },
+    {
+      "id": 1003,
+      "name": "Training Katana",
+      "type": "Weapon",
+      "slot": "Weapon",
+      "price": 120,
+      "maxStack": 1,
+      "minDamage": 6,
+      "maxDamage": 12,
+      "weaponType": "Katana",
+      "description": "A basic training katana.",
+      "levelRequirement": 1,
+      "classRestriction": "All",
+      "visualModelId": 1003,
+      "durability": 100,
+      "bonusStats": {},
+      "dropSources": [
+        { "monsterId": 101, "rate": 3.0 }
+      ]
+    },
+    {
+      "id": 1004,
+      "name": "Apprentice Staff",
+      "type": "Weapon",
+      "slot": "Weapon",
+      "price": 150,
+      "maxStack": 1,
+      "minDamage": 3,
+      "maxDamage": 8,
+      "weaponType": "Staff",
+      "description": "A basic staff for magic users.",
+      "levelRequirement": 1,
+      "classRestriction": "All",
+      "visualModelId": 1004,
+      "durability": 80,
+      "bonusStats": {
+        "Int": 2
+      },
+      "dropSources": []
+    },
+    {
+      "id": 2001,
+      "name": "Leather Armor",
+      "type": "Armor",
+      "slot": "Body",
+      "price": 200,
+      "maxStack": 1,
+      "defense": 5,
+      "magicDefense": 2,
+      "description": "Basic leather armor.",
+      "levelRequirement": 1,
+      "classRestriction": "All",
+      "visualModelId": 2001,
+      "durability": 100,
+      "bonusStats": {},
+      "dropSources": [
+        { "monsterId": 102, "rate": 2.0 }
+      ]
+    },
+    {
+      "id": 2002,
+      "name": "Iron Helmet",
+      "type": "Armor",
+      "slot": "Head",
+      "price": 150,
+      "maxStack": 1,
+      "defense": 3,
+      "magicDefense": 1,
+      "description": "A simple iron helmet.",
+      "levelRequirement": 5,
+      "classRestriction": "All",
+      "visualModelId": 2002,
+      "durability": 120,
+      "bonusStats": {},
+      "dropSources": []
+    },
+    {
+      "id": 2003,
+      "name": "Leather Boots",
+      "type": "Armor",
+      "slot": "Boots",
+      "price": 100,
+      "maxStack": 1,
+      "defense": 2,
+      "magicDefense": 1,
+      "description": "Simple leather boots.",
+      "levelRequirement": 1,
+      "classRestriction": "All",
+      "visualModelId": 2003,
+      "durability": 80,
+      "bonusStats": {
+        "Agi": 1
+      },
+      "dropSources": [
+        { "monsterId": 101, "rate": 2.0 }
+      ]
+    },
+    {
+      "id": 3001,
+      "name": "Health Potion",
+      "type": "Consumable",
+      "slot": "None",
+      "price": 50,
+      "maxStack": 99,
+      "description": "Restores 100 HP.",
+      "levelRequirement": 1,
+      "classRestriction": "All",
+      "dropSources": [
+        { "monsterId": 101, "rate": 10.0 },
+        { "monsterId": 102, "rate": 15.0 }
+      ]
+    },
+    {
+      "id": 3002,
+      "name": "Mana Potion",
+      "type": "Consumable",
+      "slot": "None",
+      "price": 60,
+      "maxStack": 99,
+      "description": "Restores 50 MP.",
+      "levelRequirement": 1,
+      "classRestriction": "All",
+      "dropSources": [
+        { "monsterId": 102, "rate": 8.0 },
+        { "monsterId": 103, "rate": 12.0 }
+      ]
+    },
+    {
+      "id": 4001,
+      "name": "Slime Jelly",
+      "type": "Material",
+      "slot": "None",
+      "price": 10,
+      "maxStack": 999,
+      "description": "Jelly extracted from a slime. Used in crafting.",
+      "levelRequirement": 1,
+      "classRestriction": "All",
+      "dropSources": [
+        { "monsterId": 101, "rate": 50.0 }
+      ]
+    },
+    {
+      "id": 4002,
+      "name": "Wolf Pelt",
+      "type": "Material",
+      "slot": "None",
+      "price": 25,
+      "maxStack": 999,
+      "description": "Fur from a wolf. Used in crafting.",
+      "levelRequirement": 1,
+      "classRestriction": "All",
+      "dropSources": [
+        { "monsterId": 102, "rate": 40.0 }
+      ]
+    },
+    {
+      "id": 4003,
+      "name": "Goblin Ear",
+      "type": "Material",
+      "slot": "None",
+      "price": 30,
+      "maxStack": 999,
+      "description": "An ear from a goblin. Proof of defeat.",
+      "levelRequirement": 1,
+      "classRestriction": "All",
+      "dropSources": [
+        { "monsterId": 103, "rate": 60.0 }
+      ]
+    },
+    {
+      "id": 5001,
+      "name": "Ring of Strength",
+      "type": "Accessory",
+      "slot": "Accessory1",
+      "price": 1000,
+      "maxStack": 1,
+      "description": "A ring that increases physical attack.",
+      "levelRequirement": 10,
+      "classRestriction": "All",
+      "visualModelId": 5001,
+      "durability": 0,
+      "bonusStats": {
+        "Stab": 5,
+        "Hack": 5
+      },
+      "dropSources": [
+        { "monsterId": 104, "rate": 1.0 }
+      ]
+    }
+  ]
+}

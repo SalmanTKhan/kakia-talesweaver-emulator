@@ -14,6 +14,7 @@ namespace Kakia.TW.World.Scripting
 	public abstract class NpcScript : IScript, IDisposable
 	{
 		private readonly List<Npc> _spawnedNpcs = new();
+		private readonly List<Reactor> _spawnedReactors = new();
 
 		/// <summary>
 		/// Initializes the script.
@@ -35,6 +36,13 @@ namespace Kakia.TW.World.Scripting
 				npc.Instance?.RemoveNpc(npc.ObjectId);
 			}
 			_spawnedNpcs.Clear();
+
+			// Remove all reactors spawned by this script
+			foreach (var reactor in _spawnedReactors)
+			{
+				reactor.Instance?.RemoveReactor(reactor.ObjectId);
+			}
+			_spawnedReactors.Clear();
 		}
 
 		/// <summary>
@@ -106,6 +114,39 @@ namespace Kakia.TW.World.Scripting
 			Log.Debug($"Spawned Warp (ObjectId: {warp.ObjectId}) at {mapId}-{zoneId} ({x},{y}) -> {destMapId}-{destZoneId} ({destX},{destY})");
 
 			return warp;
+		}
+
+		/// <summary>
+		/// Spawns a reactor (interactive object) at the specified location.
+		/// </summary>
+		/// <param name="reactorId">The reactor's model/type ID.</param>
+		/// <param name="mapId">Map ID to spawn on.</param>
+		/// <param name="zoneId">Zone ID to spawn on.</param>
+		/// <param name="x">X coordinate.</param>
+		/// <param name="y">Y coordinate.</param>
+		/// <param name="script">Optional script function when interacted with.</param>
+		/// <returns>The spawned reactor entity.</returns>
+		protected Reactor SpawnReactor(uint reactorId, ushort mapId, ushort zoneId, ushort x, ushort y, ReactorFunc? script = null)
+		{
+			var map = WorldServer.Instance.World.Maps.GetOrCreateMap(mapId, zoneId);
+			if (map == null)
+			{
+				Log.Warning($"NpcScript: Cannot spawn reactor - Map {mapId}-{zoneId} not found.");
+				return null;
+			}
+
+			var reactor = new Reactor(reactorId)
+			{
+				Position = new Position(x, y),
+				Script = script
+			};
+
+			map.AddReactor(reactor);
+			_spawnedReactors.Add(reactor);
+
+			Log.Debug($"Spawned Reactor (ObjectId: {reactor.ObjectId}, ReactorId: {reactorId}) at {mapId}-{zoneId} ({x},{y})");
+
+			return reactor;
 		}
 	}
 }

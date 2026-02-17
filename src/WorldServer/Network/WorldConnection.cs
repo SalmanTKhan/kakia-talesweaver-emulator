@@ -1,4 +1,5 @@
 ﻿using Kakia.TW.Shared.Network;
+using Kakia.TW.World.Entities;
 using Kakia.TW.World.Scripting;
 
 namespace Kakia.TW.World.Network

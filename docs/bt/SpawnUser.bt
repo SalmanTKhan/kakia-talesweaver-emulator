@@ -12,7 +12,7 @@ ubyte subOp <format=hex, comment="0x00 = Spawn User">;
 
 if (subOp == 0x00) {
     // Character spawn data
-    uint userId;
+    uint objectId;
     ubyte isSelf <comment="1 = Self, 0 = Other player">;
     ubyte isGM <comment="1 = GM flag">;
     ubyte unk1;

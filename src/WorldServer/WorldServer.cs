@@ -1,4 +1,6 @@
-﻿using Kakia.TW.Shared;
+using Kakia.TW.Shared;
+using Kakia.TW.Shared.Data;
+using Kakia.TW.World.Commands;
 using Kakia.TW.World.Database;
 using Kakia.TW.World.Events;
 using Kakia.TW.World.Managers;
@@ -44,6 +46,21 @@ namespace Kakia.TW.World
 		public ServerEvents ServerEvents { get; } = new();
 
 		/// <summary>
+		/// Returns reference to the server's chat command manager.
+		/// </summary>
+		public ChatCommands ChatCommands { get; } = new();
+
+		/// <summary>
+		/// Returns reference to the item database.
+		/// </summary>
+		public ItemDb ItemDb { get; } = new();
+
+		/// <summary>
+		/// Returns reference to the monster database.
+		/// </summary>
+		public MonsterDb MonsterDb { get; } = new();
+
+		/// <summary>
 		/// Starts the server.
 		/// </summary>
 		/// <param name="args"></param>
@@ -56,6 +73,9 @@ namespace Kakia.TW.World
 			this.LoadConf();
 			this.LoadLocalization(this.Conf);
 			this.InitDatabase(Database, this.Conf);
+
+			// Load item and monster databases
+			this.LoadDatabases();
 
 			// Load NPC/Monster scripts
 			this.LoadScripts("world", this.Conf);
@@ -75,6 +95,20 @@ namespace Kakia.TW.World
 
 			ConsoleUtil.RunningTitle();
 			new ConsoleCommands().Wait();
+		}
+
+		/// <summary>
+		/// Loads item and monster databases from JSON files.
+		/// </summary>
+		private void LoadDatabases()
+		{
+			var dbPath = Path.Combine("system", "db");
+
+			var itemsPath = Path.Combine(dbPath, "items.json");
+			this.ItemDb.Load(itemsPath);
+
+			var monstersPath = Path.Combine(dbPath, "monsters.json");
+			this.MonsterDb.Load(monstersPath);
 		}
 
 		/// <summary>

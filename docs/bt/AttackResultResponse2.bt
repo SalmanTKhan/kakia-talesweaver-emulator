@@ -1,0 +1,23 @@
+//------------------------------------------------
+//--- 010 Editor v16.0.2 Binary Template
+//
+//      File: 
+//   Authors: 
+//   Version: 
+//   Purpose: 
+//  Category: 
+// File Mask: 
+//  ID Bytes: 
+//   History: 
+//------------------------------------------------
+
+#include "inc/common.bt"
+
+TwHeader header;
+
+byte b1;
+uint characterId;
+short s1;
+byte bin[16];
+int64 damage;
+ubyte result <comment="0xFF = attack complete">;

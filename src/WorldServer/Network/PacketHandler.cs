@@ -1,8 +1,9 @@
-﻿using Kakia.TW.Shared.Network;
+using Kakia.TW.Shared.Network;
 using Kakia.TW.Shared.World;
 using Kakia.TW.World.Entities;
 using Kakia.TW.World.Scripting;
 using System;
+using System.Numerics;
 using System.Threading.Tasks;
 using Yggdrasil.Logging;
 
@@ -116,24 +117,27 @@ namespace Kakia.TW.World.Network
 
 			Send.MapChange(conn, mapId, zoneId); // 0x15 Map Packet
 
-			// 5. Spawn the user (0x33 subtype 0x00)
-			Send.SpawnUser(conn, user, isSelf: true);
-
-			// 6. Send InitObjectId (0x33 subtype 0x01) - Critical for enabling movement
-			Send.InitObjectId(conn, user.UserId);
-
-
-			//Send.StatUpdateFull(conn, user);
-			//Send.StatUpdateHardcoded(conn);
-			//Send.StatUpdateDecoded(conn, user);
-			//Send.StatUpdateFull(conn, user);
-			Send.StatUpdate(conn, user);
-
-			// 7. Add Player to Map Manager
+			// 6. Add Player to Map Manager (assigns map ObjectId)
 			var map = WorldServer.Instance.World.Maps.GetOrCreateMap(mapId, zoneId);
 			if (map != null)
 			{
 				map.Enter(conn.Player);
+
+				// 5. Spawn the user (0x33 subtype 0x00)
+				Send.SpawnUser(conn, conn.Player.ObjectId, user, isSelf: true);
+
+				//Send.StatUpdateFull(conn, user);
+				//Send.StatUpdateHardcoded(conn);
+				//Send.StatUpdateDecoded(conn, user);
+				//Send.StatUpdateFull(conn, user);
+				Send.StatUpdate(conn, user);
+				Send.InitSkills(conn);
+
+				// 7. Send InitObjectId (0x33 subtype 0x01) using map-assigned ObjectId
+				Send.InitObjectId(conn, conn.Player.ObjectId);
+
+				// 8. Finished loading
+				Send.LoadCompleteAck(conn);
 			}
 			else
 			{
@@ -200,6 +204,9 @@ namespace Kakia.TW.World.Network
 					{
 						Send.MoveObject(conn.Player.Instance, conn.Player.ObjectId, moveType, previousX, previousY, x, y, dir);
 					}
+
+					// Check portal collision for movement packets that don't send continuation updates.
+					CheckPortalCollision(conn);
 				}
 			}
 			else if (flag == 0x01) // Continuation/Update
@@ -256,7 +263,7 @@ namespace Kakia.TW.World.Network
 
 			switch (entity)
 			{
-				case Npc npc when npc.Script != null:
+				case Npc npc:
 					Log.Debug($"Player {conn.Username} clicked NPC '{npc.Name}' (ObjectId: {objectId})");
 
 					// Send pre-dialog packet sequence (from legacy ClickedEntityHandler)
@@ -269,6 +276,50 @@ namespace Kakia.TW.World.Network
 					// Start Dialog
 					var dialog = new Dialog(conn, npc);
 					conn.CurrentDialog = dialog;
+
+					if (npc.Script == null)
+					{
+						// Assign a test dialog script
+						npc.Script = async (dialog) =>
+						{
+							// Visual novel messages - sent all at once, client handles pacing
+							dialog.Message("Hello there, adventurer!");
+							dialog.Message("Welcome to the Kakia TalesWeaver Private Server.\nI'm here to test the dialog system.");
+							dialog.Close(); // Close visual novel before showing menu
+
+							// In-game select menu - requires await for user input
+							var choice = await dialog.Select("What would you like to do?",
+								"Tell me about this server",
+								"Show me your dance moves",
+								"Give me some gold",
+								"Goodbye");
+
+							switch (choice)
+							{
+								case 0: // Tell me about this server
+									dialog.Message("This server is being built from scratch!");
+									dialog.Message("The dialog system uses async/await\nfor smooth conversation flow.");
+									dialog.Message("Pretty cool, right?");
+									break;
+
+								case 1: // Dance moves
+									dialog.Message("*does a little dance*");
+									dialog.Message("Ta-da! Not bad for an NPC, huh?");
+									break;
+
+								case 2: // Gold
+									dialog.Message("Ha! You wish!");
+									dialog.Message("Maybe in a future update...");
+									break;
+
+								case 3: // Goodbye
+									dialog.Message("Safe travels, adventurer!");
+									break;
+							}
+
+							dialog.End(); // Close visual novel and end dialog session
+						};
+					}
 
 					// Run script async (fire and forget from handler perspective)
 					_ = Task.Run(async () =>
@@ -424,6 +475,48 @@ namespace Kakia.TW.World.Network
 			Send.AttackResult(conn, conn.Player.ObjectId);
 		}
 
+		[PacketHandler(Op.AttackStart)] // 0xB4
+		public void AttackStart(WorldConnection conn, Packet packet)
+		{
+			if (conn.Player == null) return;
+
+			uint targetId = 0;
+			if (packet.Length >= 10)
+			{
+				packet.GetBytes(6);
+				targetId = packet.GetUInt();
+			}
+			else if (packet.Length >= 5)
+			{
+				packet.GetByte();
+				targetId = packet.GetUInt();
+			}
+
+			Log.Debug($"AttackStartRequest: targetId={targetId}");
+
+			if (targetId != 0)
+			{
+				Send.AttackTarget(conn, targetId);
+				return;
+			}
+
+			Send.AttackAck(conn);
+			Send.AttackResult(conn, conn.Player.ObjectId);
+		}
+
+		[PacketHandler(Op.TargetEntityRequest)] // 0x59
+		public void TargetEntity(WorldConnection conn, Packet packet)
+		{
+			if (conn.Player == null) return;
+			if (packet.Length < 5) return;
+
+			byte subType = packet.GetByte();
+			uint entityId = packet.GetUInt();
+			Log.Debug($"TargetEntityRequest: sub=0x{subType:X2}, entityId={entityId}");
+
+			Send.TargetEntity(conn, entityId);
+		}
+
 		[PacketHandler(Op.SetPoseRequest)] // 0x32
 		public void SetPose(WorldConnection conn, Packet packet)
 		{
@@ -459,7 +552,23 @@ namespace Kakia.TW.World.Network
 		}
 
 		// Stub Handlers for logs to prevent warnings
-		[PacketHandler(Op.TriggerRequest, Op.UiActionRequest, Op.Unknown39Request, Op.Unknown45Request, Op.Unknown51Request, Op.Unknown55Request, Op.Unknown5FRequest, Op.Unknown60Request)]
+		[PacketHandler(
+			Op.Unknown05Response,
+			Op.TriggerRequest,
+			Op.Unknown21Request,
+			Op.UiActionRequest,
+			Op.Unknown2ERequest,
+			Op.Unknown39Request,
+			Op.Unknown3DRequest,
+			Op.FriendDialogResponse,
+			Op.Unknown45Request,
+			Op.Unknown51Request,
+			Op.Unknown55Request,
+			Op.Unknown5FRequest,
+			Op.Unknown60Request,
+			Op.Unknown63Request,
+			Op.Unknown6ARequest,
+			Op.Unknown77Request)]
 		public void IgnoredPackets(WorldConnection conn, Packet packet)
 		{
 			// These packets are currently ignored to prevent console spam

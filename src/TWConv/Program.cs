@@ -1,180 +1,266 @@
-﻿using System;
-using System.IO;
-using System.Text;
-using System.Linq;
-using System.Collections.Generic;
-using TWConv;
+﻿using System.Text.Json;
+using TalesWeaverMapConverter;
 
 // Ensure EntityToScriptConverter is accessible
 
-namespace DatBatchDecryptor
+namespace TWConv
 {
 	class Program
 	{
-		// CONFIGURATION
-		const int HEADER_SIZE = 0x129; // 297 bytes
-		const int FILENAME_OFFSET = 0x129;
-		const int FILENAME_LENGTH = 13; // "DA_xxxxx.DAT" + 0x00
-		const int BODY_OFFSET = 0x136;
-
-		// The Encrypted Header found in your sample (DA_00000.DAT).
-		// We use this to verify other files belong to the same archive type.
-		static readonly byte[] REFERENCE_HEADER = StringToByteArray(
-			"0266FD673D07851266568999034CBC43F2D5324F1C860B52964D44E62106DE87" +
-			"E705655C28E8B7829D9316F1B4B156F9C9AE5F0FE0430B7B5AABCFEEC29DF060" +
-			"7701B1FCE6601A0A1EAFB0886F199CE3F54A1C71A5CFA5A3F9E9017C18C7BE00" +
-			"A1B579B2005913699455EF3192810B410EEBF877817EB9A65B0D02FB5E9DF155" +
-			"EFB0E5B89EE9E39C36B2DC50DE741077DDBF6D2BCE477D23FBD157F156160BF5" +
-			"639A41E19B51A224075C40CEA069C7E6FB8A1D9E2FC586A832C1BCCB91F04520" +
-			"A6E5EC43322EDB8C1C48247106AE82920A70F5CBF76BC69C1398AFD893D59215" +
-			"162027B97C83B3CDAD9081E5A114A1823F2AC120FA79273B1F4F30987E02F746" +
-			"B50E5BE487C71685BB281D67E9DFFAFEF52C996913711A9CF8EA992C531A4EAB" +
-			"983A3092B8BCFA7614"
-		);
-
-		// TODO: If you find the Global XOR key for the Header/Body, enter it here.
-		// Currently empty, meaning Header and Body are passed through as-is.
-		static readonly byte[] GlobalKey = { };
-
 		static void Main(string[] args)
 		{
-			// Check for entity converter command
-			if (args.Length > 0 && args[0].Equals("--entities", StringComparison.OrdinalIgnoreCase))
-			{
-				EntityToScriptConverter.Run(args.Skip(1).ToArray());
-				return;
-			}
-			EntityToScriptConverter.Run(args.Skip(1).ToArray());
+			Run(args);
+			Console.ReadLine();
+		}
 
-			//TalesWeaverDatDecryptor.Run(args);
-			//DatSmartDecryptor.Run(args);
-			//DatMultiKeyDecryptor.Run(args);
-			//FinalDatDecryptor.Run(args);
-			//DatDeepInspector.Run(args);
-			//DatKeyCorrelator.Run(args);
-			//DatKeyCracker.Run(args);
-			return;
-			DatHeaderAnalyzer.Run(args);
-
-			Console.WriteLine("=== DAT Folder Decryptor ===");
-
-			string folderPath = args.Length > 0 ? args[0] : @"C:\Nexon\TalesWeaver\DATA\"; //AppDomain.CurrentDomain.BaseDirectory;
-
-			// Allow manual entry if not running from CLI with args
+		static int Run(string[] args)
+		{
 			if (args.Length == 0)
 			{
-				Console.Write("Enter folder path (press Enter for current dir): ");
-				string input = Console.ReadLine();
-				if (!string.IsNullOrWhiteSpace(input)) folderPath = input;
+				args = ["C:\\Projects\\GitHub\\kakia-talesweaver-emulator\\src\\TWConv\\", "Output"];
 			}
 
-			if (!Directory.Exists(folderPath))
+			if (args.Contains("-h") || args.Contains("--help"))
 			{
-				Console.WriteLine("Error: Folder does not exist.");
-				return;
+				PrintUsage();
+				return 0;
 			}
 
-			string outDir = Path.Combine(folderPath, "Decrypted");
-			Directory.CreateDirectory(outDir);
+			// Parse common options
+			var entityNames = LoadEntityNames(args);
 
-			var files = Directory.GetFiles(folderPath, "*.DAT");
-			Console.WriteLine($"Found {files.Length} .DAT files.");
+			// --dump: inspect a single binary packet
+			if (args[0] == "--dump")
+			{
+				if (args.Length < 2)
+				{
+					Console.Error.WriteLine("Usage: --dump <entity.bin>");
+					return 1;
+				}
 
-			int successCount = 0;
+				return DumpEntity(args[1]);
+			}
 
-			foreach (string file in files)
+			// --single: process one map directory
+			if (args[0] == "--single")
+			{
+				if (args.Length < 3)
+				{
+					Console.Error.WriteLine("Usage: --single <map_dir> <output_dir> [--names entities.json]");
+					return 1;
+				}
+
+				return ProcessSingle(args[1], args[2], entityNames);
+			}
+
+			// Default: batch convert
+			if (args.Length < 2)
+			{
+				Console.Error.WriteLine("Usage: <maps_root> <output_dir> [--names entities.json]");
+				return 1;
+			}
+
+			return BatchConvert(args[0], args[1], entityNames);
+		}
+
+		// ============================================================================
+		// Commands
+		// ============================================================================
+
+		static int BatchConvert(string mapsRoot, string outputDir, Dictionary<int, string> entityNames)
+		{
+			if (!Directory.Exists(mapsRoot))
+			{
+				Console.Error.WriteLine($"Error: Directory not found: {mapsRoot}");
+				return 1;
+			}
+
+			Directory.CreateDirectory(outputDir);
+
+			Console.WriteLine(new string('=', 60));
+			Console.WriteLine("TalesWeaver Map Data Converter");
+			Console.WriteLine(new string('=', 60));
+			Console.WriteLine($"Input:  {Path.GetFullPath(mapsRoot)}");
+			Console.WriteLine($"Output: {Path.GetFullPath(outputDir)}");
+			if (entityNames.Count > 0)
+				Console.WriteLine($"Entity names: {entityNames.Count} mappings loaded");
+			Console.WriteLine();
+
+			var processor = new MapProcessor(entityNames);
+			var generated = processor.ProcessAll(mapsRoot, outputDir);
+
+			Console.WriteLine();
+			Console.WriteLine(new string('=', 60));
+			Console.WriteLine($"Generated {generated.Count} script files:");
+			foreach (var path in generated)
+				Console.WriteLine($"  {Path.GetRelativePath(outputDir, path)}");
+
+			return 0;
+		}
+
+		static int ProcessSingle(string mapDir, string outputDir, Dictionary<int, string> entityNames)
+		{
+			if (!Directory.Exists(mapDir))
+			{
+				Console.Error.WriteLine($"Error: Directory not found: {mapDir}");
+				return 1;
+			}
+
+			Directory.CreateDirectory(outputDir);
+
+			Console.WriteLine($"Processing: {mapDir}");
+			var processor = new MapProcessor(entityNames);
+			var generated = processor.ProcessSingleMap(mapDir, outputDir);
+
+			Console.WriteLine();
+			Console.WriteLine($"Generated {generated.Count} script files:");
+			foreach (var path in generated)
+				Console.WriteLine($"  {Path.GetRelativePath(outputDir, path)}");
+
+			return 0;
+		}
+
+		static int DumpEntity(string filePath)
+		{
+			if (!File.Exists(filePath))
+			{
+				Console.Error.WriteLine($"Error: File not found: {filePath}");
+				return 1;
+			}
+
+			var data = File.ReadAllBytes(filePath);
+			Console.WriteLine($"File: {filePath}");
+			Console.WriteLine($"Size: {data.Length} bytes");
+			Console.WriteLine($"Hex:  {BitConverter.ToString(data)}");
+			Console.WriteLine();
+
+			var entity = Parsers.ParseEntityPacket(data, Path.GetFileName(filePath));
+			if (entity is null)
+			{
+				Console.WriteLine("Could not parse entity packet.");
+				return 1;
+			}
+
+			Console.WriteLine($"Opcode:    0x{(byte)entity.Opcode:X2} ({entity.Opcode})");
+			Console.WriteLine($"Action:    0x{(byte)entity.Action:X2} ({entity.Action})");
+			Console.WriteLine($"SpawnType: 0x{(byte)entity.Type:X2} ({entity.Type})");
+
+			switch (entity)
+			{
+				case MonsterNpcEntity m:
+					Console.WriteLine($"ObjectID:  {m.ObjectId}");
+					Console.WriteLine($"ModelID:   {m.ModelId}");
+					Console.WriteLine($"UnkV3:     0x{m.UnkV3:X8}");
+					Console.WriteLine($"UnkV30:    0x{m.UnkV30:X8}");
+					Console.WriteLine($"Position:  ({m.PositionX}, {m.PositionY})");
+					Console.WriteLine($"Direction: {m.Direction}");
+					break;
+
+				case PlayerEntity p:
+					Console.WriteLine($"ObjectID:  {p.ObjectId}");
+					Console.WriteLine($"Unk1:      0x{p.Unk1:X8}");
+					Console.WriteLine($"ModelID:   {p.ModelId}");
+					Console.WriteLine($"Position:  ({p.PositionX}, {p.PositionY})");
+					Console.WriteLine($"Direction: {p.Direction}");
+					break;
+
+				case ItemEntity item:
+					Console.WriteLine($"ItemID:    {item.ItemId}");
+					Console.WriteLine($"Amount:    {item.Amount}");
+					Console.WriteLine($"Durability:{item.Durability}");
+					Console.WriteLine($"OwnerID:   {item.OwnerId}");
+					Console.WriteLine($"Position:  ({item.PositionX}, {item.PositionY})");
+					Console.WriteLine($"Dropped:   {item.DroppedAmount}");
+					break;
+
+				case PortalEntity portal:
+					Console.WriteLine($"PortalID:  {portal.PortalId}");
+					Console.WriteLine($"Position:  ({portal.PositionX}, {portal.PositionY})");
+					Console.WriteLine($"DestMap:   {portal.DestMapId}");
+					Console.WriteLine($"DestPortal:{portal.DestPortalId}");
+					break;
+
+				case ReactorEntity r:
+					Console.WriteLine($"ObjectID:  {r.ObjectId}");
+					Console.WriteLine($"ReactorID: {r.ReactorId}");
+					Console.WriteLine($"Position:  ({r.PositionX}, {r.PositionY})");
+					break;
+
+				case RemoveEntity rem:
+					Console.WriteLine($"ObjectID:  {rem.ObjectId}");
+					break;
+
+				case GenericEntity g:
+					Console.WriteLine($"ObjectID:  {g.ObjectId}");
+					break;
+			}
+
+			return 0;
+		}
+
+		// ============================================================================
+		// Helpers
+		// ============================================================================
+
+		static Dictionary<int, string> LoadEntityNames(string[] args)
+		{
+			var idx = Array.IndexOf(args, "--names");
+			if (idx < 0) idx = Array.IndexOf(args, "--config");
+
+			if (idx >= 0 && idx + 1 < args.Length && File.Exists(args[idx + 1]))
 			{
 				try
 				{
-					ProcessFile(file, outDir);
-					successCount++;
+					var json = File.ReadAllText(args[idx + 1]);
+					var raw = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+					if (raw is not null)
+					{
+						var result = new Dictionary<int, string>();
+						foreach (var (k, v) in raw)
+						{
+							if (int.TryParse(k, out var id))
+								result[id] = v;
+						}
+						return result;
+					}
 				}
 				catch (Exception ex)
 				{
-					Console.WriteLine($"[X] Failed to process {Path.GetFileName(file)}: {ex.Message}");
+					Console.Error.WriteLine($"Warning: Failed to load entity names: {ex.Message}");
 				}
 			}
 
-			Console.WriteLine($"\nDone. Processed {successCount}/{files.Length} files.");
-			Console.WriteLine($"Decrypted files saved to: {outDir}");
-			Console.ReadKey();
+			return new();
 		}
 
-		static void ProcessFile(string filePath, string outDir)
+		static void PrintUsage()
 		{
-			string fileName = Path.GetFileName(filePath);
-			byte[] fileData = File.ReadAllBytes(filePath);
-
-			// 1. Basic Validation
-			if (fileData.Length < BODY_OFFSET)
-			{
-				Console.WriteLine($"[-] Skipping {fileName}: File too small.");
-				return;
-			}
-
-			// 2. Check Static Header (Optional warning)
-			if (!CompareBytes(fileData, REFERENCE_HEADER, 0, REFERENCE_HEADER.Length))
-			{
-				// Note: Real files might vary slightly if header contains timestamps/sizes, 
-				// but based on your dump, they are identical.
-				Console.WriteLine($"[!] Warning: {fileName} header differs from reference.");
-			}
-
-			// 3. Decrypt Filename Region (The "Known Plaintext" Logic)
-			// We force the bytes at 0x129 to match the ASCII filename.
-			// This effectively decrypts this region.
-			byte[] nameBytes = Encoding.ASCII.GetBytes(fileName);
-			// Ensure null terminator
-			Array.Resize(ref nameBytes, FILENAME_LENGTH);
-			nameBytes[FILENAME_LENGTH - 1] = 0x00;
-
-			// In your analysis, the Ciphertext changed based on filename, so to "Decrypt"
-			// we simply write the Clean Filename into that slot. 
-			// (If we were generating the Key, we would do: Key = Cipher ^ Name).
-			Array.Copy(nameBytes, 0, fileData, FILENAME_OFFSET, FILENAME_LENGTH);
-
-			// 4. Decrypt Body/Header with Global Key (If known)
-			if (GlobalKey != null && GlobalKey.Length > 0)
-			{
-				// Apply Global Key to Header (0 - 0x129)
-				XorBlock(fileData, 0, HEADER_SIZE, GlobalKey);
-
-				// Apply Global Key to Body (0x136 - End)
-				XorBlock(fileData, BODY_OFFSET, fileData.Length - BODY_OFFSET, GlobalKey);
-			}
-
-			// 5. Save
-			string outPath = Path.Combine(outDir, fileName);
-			File.WriteAllBytes(outPath, fileData);
-			Console.WriteLine($"[+] Processed {fileName}");
-		}
-
-		// Helper to apply a repeating XOR key
-		static void XorBlock(byte[] data, int start, int length, byte[] key)
-		{
-			for (int i = 0; i < length; i++)
-			{
-				data[start + i] ^= key[(start + i) % key.Length]; // Align key to file offset or restart? 
-																  // Usually global keys align to 0. If it aligns to 0: key[(start + i) % len]
-			}
-		}
-
-		static bool CompareBytes(byte[] data, byte[] match, int offset, int len)
-		{
-			if (data.Length < offset + len) return false;
-			for (int i = 0; i < len; i++)
-			{
-				if (data[offset + i] != match[i]) return false;
-			}
-			return true;
-		}
-
-		public static byte[] StringToByteArray(string hex)
-		{
-			return Enumerable.Range(0, hex.Length)
-							 .Where(x => x % 2 == 0)
-							 .Select(x => Convert.ToByte(hex.Substring(x, 2), 16))
-							 .ToArray();
+			Console.WriteLine("TalesWeaver Map Data Converter");
+			Console.WriteLine();
+			Console.WriteLine("Usage:");
+			Console.WriteLine("  TalesWeaverMapConverter <maps_root> <output_dir> [--names entities.json]");
+			Console.WriteLine("  TalesWeaverMapConverter --single <map_dir> <output_dir> [--names entities.json]");
+			Console.WriteLine("  TalesWeaverMapConverter --dump <entity.bin>");
+			Console.WriteLine();
+			Console.WriteLine("Commands:");
+			Console.WriteLine("  (default)   Batch-convert all maps under a root directory");
+			Console.WriteLine("  --single    Convert a single map directory");
+			Console.WriteLine("  --dump      Inspect a single entity binary file (Big Endian)");
+			Console.WriteLine();
+			Console.WriteLine("Options:");
+			Console.WriteLine("  --names FILE    JSON file mapping entity IDs to display names");
+			Console.WriteLine("  --config FILE   Alias for --names");
+			Console.WriteLine("  -h, --help      Show this help message");
+			Console.WriteLine();
+			Console.WriteLine("Expected directory structure:");
+			Console.WriteLine("  Maps/MapId_X/ZoneId_Y/");
+			Console.WriteLine("      map.bin           # Map header (required)");
+			Console.WriteLine("      SpawnPos.txt      # Spawn positions (optional)");
+			Console.WriteLine("      Spawn/*.bin       # Entity spawn packets (optional)");
+			Console.WriteLine("      WarpPortals/*.json# Warp portal configs (optional)");
+			Console.WriteLine("  NPCs/*.bin            # Global NPC packets (optional)");
+			Console.WriteLine();
+			Console.WriteLine("All binary data is read as Big Endian (network byte order).");
 		}
 	}
 }

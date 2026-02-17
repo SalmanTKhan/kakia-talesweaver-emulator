@@ -15,7 +15,6 @@ public class SelectCharacterHandler : PacketHandler
 		using PacketReader pr = new(p.Data);
 		pr.Skip(1); // Skip Packet ID
 
-
 		var characterName = pr.ReadPrefixedString();
 		client.SetCharacter(characterName);
 

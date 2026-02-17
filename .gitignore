@@ -203,3 +203,5 @@ CLAUDE.md
 .claude/
 
 *.bin
+/.opencode
+*.bak

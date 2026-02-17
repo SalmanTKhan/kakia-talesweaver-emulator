@@ -1,4 +1,5 @@
-﻿using Kakia.TW.World.Events;
+﻿using Kakia.TW.World.Entities;
+using Kakia.TW.World.Events;
 using System;
 using System.Collections.Concurrent;
 using System.Numerics;

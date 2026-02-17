@@ -24,14 +24,21 @@ if (action == Object) {
             break;
 
         case MonsterNpc:
-        case MonsterNpc2:
-        case MonsterNpc3:
             uint objectId;
-            uint modelId <comment="NPC/Monster model ID">;
             uint unkV3;
             uint unkV30;
+            uint modelId <comment="NPC/Monster model ID">;
             Position pos;
             ubyte direction;
+            short s1;
+            short s2;
+            short s3;
+            short s4;
+            short s5;
+            int64 l1;
+            int64 l2;
+            short s6;
+            byte bin[38];
             break;
 
         case Portal:
@@ -45,10 +52,12 @@ if (action == Object) {
             // Player spawns use a different packet (0x33 subOp 0x00)
             uint objectId;
             uint unk1;
-            byte b1;
+            //ushort s1;
+            //ushort s2;
             uint modelId;
             Position pos;
             ubyte direction;
+            byte b1;
             ubyte b2;
             int64 l1;
             ubyte remaining[39];

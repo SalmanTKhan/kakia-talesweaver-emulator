@@ -5,7 +5,12 @@
     <RootNamespace>kakia_talesweaver_network</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ExecTails.Yggdrasil" Version="1.4.1" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\kakia-talesweaver-logging\kakia-talesweaver-logging.csproj" />

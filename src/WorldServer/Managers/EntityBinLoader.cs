@@ -109,12 +109,13 @@ namespace Kakia.TW.World.Managers
 				}
 			}
 
-			if (rawPackets.Count > 0)
-			{
-				map.SetRawEntityPackets(rawPackets);
-				var typeInfo = string.Join(", ", entityCounts.Select(kv => $"Type{kv.Key:X2}={kv.Value}"));
-				Log.Debug($"  Map {mapId}-{zoneId}: {rawPackets.Count} entities ({typeInfo})");
-			}
+			if (false)
+				if (rawPackets.Count > 0)
+				{
+					map.SetRawEntityPackets(rawPackets);
+					var typeInfo = string.Join(", ", entityCounts.Select(kv => $"Type{kv.Key:X2}={kv.Value}"));
+					Log.Debug($"  Map {mapId}-{zoneId}: {rawPackets.Count} entities ({typeInfo})");
+				}
 
 			return rawPackets.Count;
 		}

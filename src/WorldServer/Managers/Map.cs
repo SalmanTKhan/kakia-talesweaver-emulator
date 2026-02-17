@@ -1,4 +1,4 @@
-﻿using Kakia.TW.Shared.Network;
+using Kakia.TW.Shared.Network;
 using Kakia.TW.Shared.World;
 using Kakia.TW.World.Entities;
 using Kakia.TW.World.Network;
@@ -21,6 +21,7 @@ namespace Kakia.TW.World.Managers
 		private readonly ConcurrentDictionary<uint, Npc> _npcs = new();
 		private readonly ConcurrentDictionary<uint, Monster> _monsters = new();
 		private readonly ConcurrentDictionary<uint, Warp> _warps = new();
+		private readonly ConcurrentDictionary<uint, Reactor> _reactors = new();
 		private readonly List<Spawner> _spawners = new();
 
 		// Object ID counter - starts at 0, increments for each entity
@@ -102,6 +103,7 @@ namespace Kakia.TW.World.Managers
 				case Npc n: _npcs.TryRemove(n.ObjectId, out _); break;
 				case Monster m: _monsters.TryRemove(m.ObjectId, out _); break;
 				case Warp w: _warps.TryRemove(w.ObjectId, out _); break;
+				case Reactor r: _reactors.TryRemove(r.ObjectId, out _); break;
 				case ItemEntity i: _items.TryRemove(i.ObjectId, out _); break;
 			}
 
@@ -154,7 +156,7 @@ namespace Kakia.TW.World.Managers
 
 					// Spawn existing entities for the player using ObjectId
 					foreach (var m in _monsters.Values) Send.SpawnNpc(p.Connection, m.ObjectId, m.ModelId, m.Position, m.Direction);
-					foreach (var w in _warps.Values) Send.SpawnPortal(p.Connection, new WarpPortal { Id = w.ObjectId, MinPoint = w.Position, DestMapId = w.DestMapId, DestPortalId = 1 });
+					foreach (var w in _warps.Values) Send.SpawnPortal(p.Connection, w);
 
 					// Spawn this player for others
 					Broadcast(p, () =>
@@ -221,9 +223,9 @@ namespace Kakia.TW.World.Managers
 				{
 					if (existingPlayer.ObjectId == player.ObjectId) continue;
 					// Send existing player to new player
-					Send.SpawnUser(player.Connection, existingPlayer.Data, false);
+					Send.SpawnUser(player.Connection, existingPlayer.ObjectId, existingPlayer.Data, false);
 					// Send new player to existing player
-					Send.SpawnUser(existingPlayer.Connection, player.Data, false);
+					Send.SpawnUser(existingPlayer.Connection, player.ObjectId, player.Data, false);
 				}
 
 				foreach (var item in _items.Values)
@@ -240,7 +242,25 @@ namespace Kakia.TW.World.Managers
 				// Send existing monsters to new player using ObjectId
 				foreach (var monster in _monsters.Values)
 				{
-					Send.SpawnNpc(player.Connection, monster.ObjectId, monster.ModelId, monster.Position, monster.Direction);
+					Send.SpawnMonster(player.Connection, monster);
+				}
+
+				// Send existing warps to new player
+				foreach (var warp in _warps.Values)
+				{
+					Send.SpawnPortal(player.Connection, warp);
+				}
+
+				// Send existing reactors to new player
+				foreach (var reactor in _reactors.Values)
+				{
+					Send.SpawnReactor(player.Connection, reactor.ObjectId, reactor.ReactorId, reactor.Position);
+				}
+
+				// Send raw entity packets (portals, NPCs from .bin files)
+				foreach (var rawPacket in _rawEntityPackets)
+				{
+					player.Connection.SendRaw(rawPacket);
 				}
 			}
 		}
@@ -370,10 +390,17 @@ namespace Kakia.TW.World.Managers
 		{
 			foreach (var warp in _warps.Values)
 			{
-				// Simple distance check (portal collision radius of 2 tiles)
+				if (warp.HasArea)
+				{
+					if (x >= warp.MinX && x <= warp.MaxX &&
+						y >= warp.MinY && y <= warp.MaxY)
+						return warp;
+					continue;
+				}
+
+				// Point warp: keep small tolerance around portal position.
 				int dx = Math.Abs(x - warp.Position.X);
 				int dy = Math.Abs(y - warp.Position.Y);
-
 				if (dx <= 2 && dy <= 2)
 				{
 					return warp;
@@ -438,7 +465,7 @@ namespace Kakia.TW.World.Managers
 				// Broadcast monster spawn to all players on the map using ObjectId
 				foreach (var player in _players.Values)
 				{
-					Send.SpawnNpc(player.Connection, monster.ObjectId, monster.ModelId, monster.Position, monster.Direction);
+					Send.SpawnMonster(player.Connection, monster.ObjectId, monster.ModelId, monster.Position, monster.Direction);
 				}
 			}
 		}
@@ -466,6 +493,48 @@ namespace Kakia.TW.World.Managers
 		public bool TryGetMonster(uint objectId, out Monster? monster)
 		{
 			return _monsters.TryGetValue(objectId, out monster);
+		}
+
+		/// <summary>
+		/// Adds a reactor to the map and broadcasts spawn to all players.
+		/// </summary>
+		public void AddReactor(Reactor reactor)
+		{
+			RegisterEntity(reactor);
+
+			if (_reactors.TryAdd(reactor.ObjectId, reactor))
+			{
+				// Broadcast reactor spawn to all players on the map
+				foreach (var player in _players.Values)
+				{
+					Send.SpawnReactor(player.Connection, reactor.ObjectId, reactor.ReactorId, reactor.Position);
+				}
+			}
+		}
+
+		/// <summary>
+		/// Removes a reactor from the map by ObjectId and broadcasts despawn to all players.
+		/// </summary>
+		public void RemoveReactor(uint objectId)
+		{
+			if (_reactors.TryRemove(objectId, out var reactor))
+			{
+				// Broadcast reactor removal to all players
+				foreach (var player in _players.Values)
+				{
+					Send.EntityRemove(player.Connection, reactor.ObjectId);
+				}
+
+				UnregisterEntity(reactor);
+			}
+		}
+
+		/// <summary>
+		/// Gets a reactor by ObjectId if it exists on this map.
+		/// </summary>
+		public bool TryGetReactor(uint objectId, out Reactor? reactor)
+		{
+			return _reactors.TryGetValue(objectId, out reactor);
 		}
 	}
 }

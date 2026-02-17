@@ -1,4 +1,18 @@
 <Solution>
+  <Folder Name="/1 Servers/">
+    <Project Path="src/LobbyServer/LobbyServer.csproj" />
+    <Project Path="src/LoginServer/LoginServer.csproj" Id="1d475f3e-a49b-4ed3-9332-49b3ce1e671d" />
+    <Project Path="src/WorldServer/WorldServer.csproj" />
+  </Folder>
+  <Folder Name="/2 Scripting/">
+    <Project Path="system/scripts/ScriptsWorldSystem.csproj" />
+  </Folder>
+  <Folder Name="/3 Libs/">
+    <Project Path="src/Shared/Shared.csproj" Id="c48444b5-d0d3-4b24-89f6-eb72aa86a7c3" />
+  </Folder>
+  <Folder Name="/4 Tools/">
+    <Project Path="src/TWConv/TWConv.csproj" Id="10bf0cbd-9fc2-4887-b97f-1bdf72da0f18" />
+  </Folder>
   <Project Path="kakia-talesweaver-emulator/kakia-talesweaver-emulator.csproj" />
   <Project Path="kakia-talesweaver-logging/kakia-talesweaver-logging.csproj" />
   <Project Path="kakia-talesweaver-network/kakia-talesweaver-network.csproj" />

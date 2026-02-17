@@ -71,11 +71,31 @@ namespace Kakia.TW.World.Entities
 
 	public class Warp : Entity
 	{
-		public uint PortalId { get; set; } // The visual ID of the portal
+		public uint PortalId { get; set; }
 		public ushort DestMapId { get; set; }
 		public ushort DestZoneId { get; set; }
 		public ushort DestX { get; set; }
 		public ushort DestY { get; set; }
+
+		/// <summary>
+		/// Facing direction at destination (0-7). Default 0.
+		/// </summary>
+		public byte DestDirection { get; set; }
+
+		/// <summary>
+		/// Area-based trigger bounds. When set, the warp activates when a
+		/// player enters the rectangle (MinX,MinY)-(MaxX,MaxY) instead of
+		/// a single tile at Position.
+		/// </summary>
+		public ushort MinX { get; set; }
+		public ushort MinY { get; set; }
+		public ushort MaxX { get; set; }
+		public ushort MaxY { get; set; }
+
+		/// <summary>
+		/// True when this warp uses an area trigger rather than a single point.
+		/// </summary>
+		public bool HasArea => MinX != MaxX || MinY != MaxY;
 
 		public Warp()
 		{

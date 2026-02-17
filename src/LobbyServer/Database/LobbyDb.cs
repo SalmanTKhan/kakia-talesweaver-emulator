@@ -68,8 +68,13 @@ namespace Kakia.TW.Lobby.Database
 				// Assuming columns exist, otherwise defaults are fine for Lobby
 				try
 				{
-					c.ObjectPos.Position.X = (ushort)reader.GetInt16("x");
-					c.ObjectPos.Position.Y = (ushort)reader.GetInt16("y");
+					var x = (ushort)reader.GetInt16("x");
+					var y = (ushort)reader.GetInt16("y");
+					c.Position = new Position
+					{
+						X = x,
+						Y = y
+					};
 				}
 				catch { /* use defaults */ }
 

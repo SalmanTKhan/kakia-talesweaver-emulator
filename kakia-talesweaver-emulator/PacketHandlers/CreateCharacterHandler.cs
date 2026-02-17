@@ -58,8 +58,5 @@ public class CreateCharacterHandler : PacketHandler
 		JsonDB.SaveCharacter(session.AccountId, character);
 
 		// TODO: Validate character creation (name uniqueness, model validity, etc.)
-
-
-
 	}
 }

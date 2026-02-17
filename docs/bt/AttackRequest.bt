@@ -9,3 +9,5 @@ TwHeader header;
 
 // Attack request data
 // Structure depends on attack type (basic, skill, etc.)
+byte subType;
+int objectId;

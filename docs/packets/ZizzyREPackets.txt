@@ -1,0 +1,260 @@
+A0 server side sends message types or club creation type stuff. 
+
+1D is monster skin stuff.
+
+1B between 20-30 causes a connection crash - avoiding for now
+
+1F environmental
+
+1F 04(environment type 2 is rain 3 is snow) speed, direction
+
+adds fog and removes it:
+1F 04 01 01 01 01
+
+1F 04 00 00 00 00
+
+this is more complicated though beacuse when you try to unequip it is a 1F 02 
+
+20 something does night time
+
+23 did something about winning an arena or something then crashed - avoiding for now
+
+24 brought up a betting UI. Probably for rolling for loot? crashed shortly after - avoiding for now
+
+i'm not even half way to my 1st pass and this is what I know so far:
+
+```
+Combat started client side request
+[Warning] NOT IMPLEMENTED [180]
+[Debug] == Packet ==
+B4 00 57 9F EF 02
+
+A0 server side sends message types or club creation type stuff. 
+
+1D is monster skin stuff.
+
+1B between 20-30 causes a connection crash - avoiding for now
+
+1F environmental
+
+20 something does night time
+
+23 did something about winning an arena or something then crashed - avoiding for now
+
+24 01 brought up a betting UI? gambling? for rolling loot? crashed shortly after - avoiding for now
+24 05 causes a crash
+24 07 Magic Reform system?
+24 09 looks like a pay to win chest picking gambling system
+
+25 team board related it seems - can crash if too much is sent
+
+29 - 84 is the client action for 54 00-ff and the server is the what triggers it 29 00-ff
+
+2A 00 User shop!
+2A 01 blank message, probably response expected for doing the shop
+2A 03 blank message, probably response expected for doing the shop
+2A 04 blank message, probably response expected for doing the shop
+
+2F has a yes or no type options
+2F 08 = question with client response [Warning] NOT IMPLEMENTED [55]
+[Debug] == Packet ==
+37 0A 01 01 01
+
+30 02 event panel
+
+35 01 is a mentor tree
+35 04 causes a crash
+35 05 is a mentor tree
+
+38 02 Unequip Arms
+Likely:
+38 00 = Head
+38 01 = Armor
+38 02 = Arms
+38 03 = Sub Arms
+38 04 = Face
+38 05 = Back
+38 06 = Hand
+38 07 = Foot
+38 08 = Effect
+38 09 = Artifact
+38 0A = Relic(Right)
+38 0B = Relic(Left)
+38 0C = Vehicle
+
+likely needs string for team name and creation
+3A 01 prompt looking for text of some sort and response [Warning] NOT IMPLEMENTED [46]
+[Debug] == Packet ==
+2E 02 04 50 6F 6B 65 01 01 01
+3A 02 create team page
+
+42 brought up unknown messages
+
+43 01 is to create a club
+43 10 does:
+[Warning] NOT IMPLEMENTED [61]
+[Debug] == Packet ==
+3D 14 03
+[Warning] NOT IMPLEMENTED [61]
+[Debug] == Packet ==
+3D 14 02
+[Warning] NOT IMPLEMENTED [61]
+[Debug] == Packet ==
+3D 14 01
+[Warning] NOT IMPLEMENTED [61]
+[Debug] == Packet ==
+3D 14 00
+[Warning] NOT IMPLEMENTED [61]
+[Debug] == Packet ==
+3D 14 05
+and I am in a club. joins + stats about it?
+all packets in 43 appears to change different aspects of clubs.
+43 18 asks a request responding with:
+[Debug] == Packet ==
+3D 19 01 01 01 01 01
+
+Event system of some sort
+44 00 01 01 01 01 crashes by trying to call event 0843.evt appears to be using 0x0FFF mask 4 bytes
+
+45 is soul link
+
+46 unknown crash
+
+At: 47 01 01 01 01 01
+[Warning] NOT IMPLEMENTED [33]
+[Debug] == Packet ==
+21 01 01 01 01 02
+
+At: 47 02 01 01 01 01
+[Warning] NOT IMPLEMENTED [33]
+[Debug] == Packet ==
+21 01 01 01 01 03
+
+At: 47 03 01 01 01 01
+[Warning] NOT IMPLEMENTED [33]
+[Debug] == Packet ==
+21 01 01 01 01 04 00 00 2D D4 9E 00 01 00
+
+49 unknown crash
+
+4E is card and book related
+4E 03 monster book
+4E 05 select card
+
+55 00 is title related
+55 short past this point causes a client freeze
+
+56 hard to work with this one, not sure
+56 01 & 02 runtime error client crash
+
+
+59 01 01 brings up an orb menu of some sort
+59 01 00 closes it
+59 02 01 01 01 01 combo of 168430009
+59 02 00 00 00 01 comb of 1 looks like it is just an int counter
+
+5C contains a lot of unknown things I can't explain
+5C 00 brings up a pic and if you click on it: [Warning] NOT IMPLEMENTED [106]
+[Debug] == Packet ==
+6A 00 01
+5C 01 brings up a door in the same area and if you click on it: [Warning] NOT IMPLEMENTED [106]
+[Debug] == Packet ==
+6A 01 00
+something in 5C also adds a lock icon
+
+61 is causing crashes at 00 and 01 so far. passing for now
+
+62 is Tales pass (some sort of membership system?) P2W? Battlepass?
+
+At: 63 00 01 01 01 01
+
+[Warning] NOT IMPLEMENTED [96]
+[Debug] == Packet ==
+60 03 01 01 01 01
+[Warning] NOT IMPLEMENTED [96]
+[Debug] == Packet ==
+60 02 01 01 01 01
+[Warning] NOT IMPLEMENTED [96]
+[Debug] == Packet ==
+60 0B 01 01 01 01
+
+68 causing crashes
+
+69 causing crashes
+
+6A menus
+6A 00 shows a money simple near top left / mouse cursor for selling?
+6A 03 shows a shop / needs position info (mouse cursor sync most likely or center)
+6A 7F Only appears a window with the shop open asking for "negotiated" price
+6A 09 club manager
+
+6A 0C [Warning] NOT IMPLEMENTED [5]
+[Debug] == Packet ==
+05 01 01 00 2D 01 00
+
+6A 0D Bank Deposit
+
+6A 12 Ability M.R????
+6A tons of menus to go through and a club manager
+
+6C changes number above top left area
+
+6D 03 is some sort of timer
+6D 06 is another timer
+
+6E causes crash
+
+71 causes crash
+
+72 02 04 03 03 | 72 packet id | 02 = final skill | 3 bytes are combo slot for final skill 0-4
+
+world map stuff?
+At: 74 01 01 01 01 01
+[Warning] NOT IMPLEMENTED [68]
+[Debug] == Packet ==
+44 03
+[Warning] NOT IMPLEMENTED [99]
+[Debug] == Packet ==
+63 01 52
+
+At: 74 02 01 01 01 01
+[Warning] NOT IMPLEMENTED [68]
+[Debug] == Packet ==
+44 0D 00 00 00 00
+
+7A maybe a QTE?
+
+7B is some sort of notification system
+At: 7B A0 01 01 01 01
+[Warning] NOT IMPLEMENTED [119]
+[Debug] == Packet ==
+77 00 00
+
+7D group chatting and private messaging?
+
+82 PVP info?
+82 00 clears it
+82 01 01 01 01 01 shows 257 vs 257 | 82 packet id | vs | short left team count | short right team count
+82 04 is the "START" message
+
+83 is the quest log system. need to learn how it works, can crash easily.
+83 00 opens the log
+83 01 needs quest start data
+
+At: 84 00 01 01 01 01
+[Warning] NOT IMPLEMENTED [85]
+[Debug] == Packet ==
+55 00 01 01 00 00
+
+85 00 Crown System
+somewhere around here a stat setting changed 
+88 07 Diary System
+
+8A 00 Tecith Core System
+
+8B 03 Unknown system? looks like orbs or something in a pentagram type symbol
+
+8C 00 skill mastery system
+8C 01 crashes
+
+8E unknown system or list?

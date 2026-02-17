@@ -1,4 +1,6 @@
-﻿namespace kakia_talesweaver_network.Cryptography;
+﻿using Yggdrasil.Util;
+
+namespace kakia_talesweaver_network.Cryptography;
 
 public class TsCrypto
 {
@@ -11,6 +13,12 @@ public class TsCrypto
 			throw new FileNotFoundException("keyblob.bin not found.");
 
 		keyblobRaw = File.ReadAllBytes("keyblob.bin");
+
+		if (keyblobRaw.Length > 16)
+		{
+			string keyBodySig = Hex.ToString(keyblobRaw, 12, 4);
+			Console.WriteLine($"[TwCrypto] Key Raw. Seed: {keySeed:X8}, KeySig: {keyBodySig} (First 4 bytes of body)");
+		}
 
 		int size = (((int)(keySeed >> 0x14) ^ ((int)(keySeed >> 8) & 0xff)) & 0xf) ^ ((int)(keySeed >> 0x14) & 0xff);
 		int offset = (((int)(keySeed >> 0xc) & 0xF00) | ((int)(keySeed >> 4) & 0xF) | ((int)(keySeed >> 8) & 0xF0) | ((int)(keySeed >> 0x10) & 0xF000));
@@ -53,6 +61,12 @@ public class TsCrypto
 		if (result.Length > 12)
 		{
 			result[11] = result[12];
+		}
+
+		if (result.Length > 16)
+		{
+			string keyBodySig = Hex.ToString(result, 12, 4);
+			Console.WriteLine($"[TsCrypto] Key Gen. Seed: {keySeed:X8}, KeySig: {keyBodySig} (First 4 bytes of body)");
 		}
 
 		return result;
@@ -105,6 +119,10 @@ public class TsCrypto
 		byte[] packetBuffIn = new byte[dataLen];
 		Array.Copy(encPack, 4, packetBuffIn, 0, dataLen);
 
+		// --- DEBUG LOGGING ---
+		//Console.WriteLine($"[Crypto] In: {Hex.ToString(packetBuffIn)}");
+		// ---------------------
+
 		int packet_len = packetBuffIn.Length;
 		byte[] packetBuffOut = new byte[packet_len];
 
@@ -152,6 +170,10 @@ public class TsCrypto
 			packetBuffOut[i] = (byte)temp_byte3;
 			temp_byte2 ^= temp_byte3;
 		}
+
+		// --- DEBUG LOGGING ---
+		//Console.WriteLine($"[Crypto] Out: {Hex.ToString(packetBuffOut)}");
+		// ---------------------
 
 		return packetBuffOut;
 	}

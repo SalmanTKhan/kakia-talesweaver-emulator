@@ -235,6 +235,11 @@
 		// Available stat points to distribute
 		public int StatPoints { get; set; } = 9999;
 
+		// Rune progression
+		public short RuneLevel { get; set; } = 1;
+		public int RuneExp { get; set; } = 5000;
+		public int RuneMaxExp { get; set; } = 10000;
+
 		// ===== Equipment Bonus Stats (Computed from equipped items) =====
 		/// <summary>
 		/// Calculates the total bonus for a stat type from all equipped items.
@@ -338,14 +343,5 @@
 		public GuildTeamInfo GuildInfo { get; set; } = new();
 		public List<GameItem> Equipment { get; set; } = new();
 		public CharacterAppearance Appearance { get; set; } = new();
-	}
-
-	public class WarpPortal
-	{
-		public uint Id { get; set; }
-		public Position MinPoint { get; set; }
-		public Position MaxPoint { get; set; }
-		public ushort DestMapId { get; set; }
-		public ushort DestPortalId { get; set; }
 	}
 }

@@ -3,6 +3,7 @@ using Kakia.TW.World;
 using Kakia.TW.World.Entities;
 using Kakia.TW.World.Managers;
 using Kakia.TW.World.Network;
+using Yggdrasil.Geometry.Shapes;
 
 namespace Kakia.TW.World.Entities
 {
@@ -42,6 +43,21 @@ namespace Kakia.TW.World.Entities
 
 			// 4. Enter new map (This triggers MapChange packet and Spawns)
 			newMap.Enter(this);
+
+			// 5. Spawn the user (0x33 subtype 0x00)
+			Send.SpawnUser(this.Connection, this.ObjectId, this.Data, isSelf: true);
+
+			//Send.StatUpdateFull(conn, user);
+			//Send.StatUpdateHardcoded(conn);
+			//Send.StatUpdateDecoded(conn, user);
+			//Send.StatUpdateFull(conn, user);
+			Send.StatUpdate(this.Connection, this.Data);
+
+			// 7. Send InitObjectId (0x33 subtype 0x01) using map-assigned ObjectId
+			Send.InitObjectId(this.Connection, this.ObjectId);
+
+			// 8. Finished loading
+			Send.LoadCompleteAck(this.Connection);
 
 			// 5. Save location to DB
 			WorldServer.Instance.Database.SaveCharacterPosition(this.Data);

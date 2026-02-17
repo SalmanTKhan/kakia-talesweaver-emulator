@@ -1,4 +1,6 @@
-﻿namespace Kakia.TW.World.Events.Args
+﻿using Kakia.TW.World.Entities;
+
+namespace Kakia.TW.World.Events.Args
 {
 	/// <summary>
 	/// Arguments for events related to a player character.

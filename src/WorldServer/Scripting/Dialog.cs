@@ -127,7 +127,7 @@ namespace Kakia.TW.World.Scripting
 		/// </summary>
 		public void OpenShop(NpcShop shop)
 		{
-			// TODO: Implement shop packet
+			Send.OpenShop(_conn, _npc.ObjectId, shop);
 			Close();
 		}
 

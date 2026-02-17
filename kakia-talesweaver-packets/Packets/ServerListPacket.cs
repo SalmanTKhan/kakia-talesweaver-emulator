@@ -21,7 +21,7 @@ public class ServerListPacket
 	}
 }
 
-public class  ServerInfo
+public class ServerInfo
 {
 	public byte Id { get; set; }
 	public IPAddress IP { get; set; }

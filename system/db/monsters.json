@@ -1,0 +1,184 @@
+{
+  "monsters": [
+    {
+      "id": 101,
+      "name": "Slime",
+      "level": 1,
+      "maxHP": 50,
+      "maxMP": 0,
+      "modelId": 1001,
+      "type": "Normal",
+      "attack": 5,
+      "defense": 2,
+      "magicAttack": 0,
+      "magicDefense": 1,
+      "hitRate": 50,
+      "evasion": 5,
+      "experience": 10,
+      "gold": 5,
+      "respawnTimeMs": 30000,
+      "aggroRange": 0,
+      "walkSpeed": 15,
+      "runSpeed": 18,
+      "chaseRange": 50,
+      "behavior": "Passive",
+      "dropTable": [
+        { "itemId": 4001, "dropRate": 50.0, "minAmount": 1, "maxAmount": 3 },
+        { "itemId": 3001, "dropRate": 10.0, "minAmount": 1, "maxAmount": 1 },
+        { "itemId": 1001, "dropRate": 5.0, "minAmount": 1, "maxAmount": 1 },
+        { "itemId": 1003, "dropRate": 3.0, "minAmount": 1, "maxAmount": 1 },
+        { "itemId": 2003, "dropRate": 2.0, "minAmount": 1, "maxAmount": 1 }
+      ],
+      "skills": [],
+      "spawnLocations": [
+        { "mapId": 6, "zoneId": 38656, "x": 100, "y": 100, "radius": 20 },
+        { "mapId": 6, "zoneId": 38656, "x": 150, "y": 120, "radius": 15 }
+      ]
+    },
+    {
+      "id": 102,
+      "name": "Wolf",
+      "level": 5,
+      "maxHP": 150,
+      "maxMP": 0,
+      "modelId": 1002,
+      "type": "Normal",
+      "attack": 15,
+      "defense": 5,
+      "magicAttack": 0,
+      "magicDefense": 3,
+      "hitRate": 55,
+      "evasion": 10,
+      "experience": 30,
+      "gold": 15,
+      "respawnTimeMs": 45000,
+      "aggroRange": 50,
+      "walkSpeed": 20,
+      "runSpeed": 28,
+      "chaseRange": 100,
+      "behavior": "Aggressive",
+      "dropTable": [
+        { "itemId": 4002, "dropRate": 40.0, "minAmount": 1, "maxAmount": 2 },
+        { "itemId": 3001, "dropRate": 15.0, "minAmount": 1, "maxAmount": 2 },
+        { "itemId": 3002, "dropRate": 8.0, "minAmount": 1, "maxAmount": 1 },
+        { "itemId": 1002, "dropRate": 3.0, "minAmount": 1, "maxAmount": 1 },
+        { "itemId": 2001, "dropRate": 2.0, "minAmount": 1, "maxAmount": 1 }
+      ],
+      "skills": [],
+      "spawnLocations": [
+        { "mapId": 6, "zoneId": 38656, "x": 200, "y": 150, "radius": 30 }
+      ]
+    },
+    {
+      "id": 103,
+      "name": "Goblin",
+      "level": 8,
+      "maxHP": 200,
+      "maxMP": 20,
+      "modelId": 1003,
+      "type": "Normal",
+      "attack": 20,
+      "defense": 8,
+      "magicAttack": 5,
+      "magicDefense": 5,
+      "hitRate": 58,
+      "evasion": 12,
+      "experience": 50,
+      "gold": 30,
+      "respawnTimeMs": 60000,
+      "aggroRange": 60,
+      "walkSpeed": 18,
+      "runSpeed": 25,
+      "chaseRange": 120,
+      "behavior": "Aggressive",
+      "dropTable": [
+        { "itemId": 4003, "dropRate": 60.0, "minAmount": 1, "maxAmount": 2 },
+        { "itemId": 3001, "dropRate": 20.0, "minAmount": 1, "maxAmount": 2 },
+        { "itemId": 3002, "dropRate": 12.0, "minAmount": 1, "maxAmount": 1 }
+      ],
+      "skills": [
+        { "skillId": 1, "level": 1, "useChance": 30.0, "cooldownMs": 10000 }
+      ],
+      "spawnLocations": [
+        { "mapId": 6, "zoneId": 38656, "x": 250, "y": 200, "radius": 25 }
+      ]
+    },
+    {
+      "id": 104,
+      "name": "Goblin Chief",
+      "level": 15,
+      "maxHP": 1000,
+      "maxMP": 100,
+      "modelId": 1004,
+      "type": "Elite",
+      "attack": 40,
+      "defense": 20,
+      "magicAttack": 15,
+      "magicDefense": 12,
+      "hitRate": 65,
+      "evasion": 15,
+      "experience": 300,
+      "gold": 150,
+      "respawnTimeMs": 300000,
+      "aggroRange": 80,
+      "walkSpeed": 16,
+      "runSpeed": 24,
+      "chaseRange": 150,
+      "behavior": "Aggressive",
+      "dropTable": [
+        { "itemId": 4003, "dropRate": 100.0, "minAmount": 3, "maxAmount": 5 },
+        { "itemId": 3001, "dropRate": 50.0, "minAmount": 2, "maxAmount": 5 },
+        { "itemId": 3002, "dropRate": 40.0, "minAmount": 2, "maxAmount": 3 },
+        { "itemId": 5001, "dropRate": 1.0, "minAmount": 1, "maxAmount": 1 }
+      ],
+      "skills": [
+        { "skillId": 1, "level": 2, "useChance": 40.0, "cooldownMs": 8000 },
+        { "skillId": 2, "level": 1, "useChance": 20.0, "cooldownMs": 15000 }
+      ],
+      "spawnLocations": [
+        { "mapId": 6, "zoneId": 38656, "x": 300, "y": 250, "radius": 10 }
+      ]
+    },
+    {
+      "id": 105,
+      "name": "Ancient Dragon",
+      "level": 100,
+      "maxHP": 100000,
+      "maxMP": 5000,
+      "modelId": 1100,
+      "type": "Boss",
+      "attack": 500,
+      "defense": 200,
+      "magicAttack": 300,
+      "magicDefense": 150,
+      "hitRate": 85,
+      "evasion": 25,
+      "experience": 50000,
+      "gold": 10000,
+      "respawnTimeMs": 3600000,
+      "aggroRange": 150,
+      "walkSpeed": 12,
+      "runSpeed": 30,
+      "chaseRange": 300,
+      "behavior": "Boss",
+      "fireResist": 100,
+      "waterResist": -50,
+      "windResist": 0,
+      "earthResist": 50,
+      "lightResist": -25,
+      "darkResist": 25,
+      "dropTable": [
+        { "itemId": 3001, "dropRate": 100.0, "minAmount": 10, "maxAmount": 20 },
+        { "itemId": 3002, "dropRate": 100.0, "minAmount": 10, "maxAmount": 20 }
+      ],
+      "skills": [
+        { "skillId": 100, "level": 10, "useChance": 30.0, "cooldownMs": 5000 },
+        { "skillId": 101, "level": 5, "useChance": 20.0, "cooldownMs": 20000 },
+        { "skillId": 102, "level": 3, "useChance": 10.0, "cooldownMs": 60000 }
+      ],
+      "spawnLocations": [
+        { "mapId": 99, "zoneId": 1, "x": 500, "y": 500, "radius": 0 }
+      ]
+    }
+  ]
+}

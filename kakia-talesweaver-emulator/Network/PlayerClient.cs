@@ -1,4 +1,5 @@
-﻿using kakia_talesweaver_emulator.DB;
+﻿using Kakia.TW.Shared.Network;
+using kakia_talesweaver_emulator.DB;
 using kakia_talesweaver_emulator.Models;
 using kakia_talesweaver_emulator.PacketHandlers;
 using kakia_talesweaver_logging;
@@ -54,8 +55,15 @@ public class PlayerClient : IPlayerClient
 
 	public async Task PacketRecieved(RawPacket packet)
 	{
+		// --- ADDED LOGGING HERE ---
+		PaleLogger.Log(true, packet.Data);
+		// Log every single packet unconditionally before processing
+		// Logger.Log($"[RECV RAW] ID: 0x{packet.PacketId:X2} | Len: {packet.Data.Length}{Environment.NewLine}{packet.Data.ToFormatedHexString()}", LogLevel.Debug);
+		// --------------------------
+
 		if (!_cryptoSet && _serverType == ServerType.Login && packet.Data.Length == 5)
 		{
+			Logger.Log("Crypto Handshake ACK received.", LogLevel.Debug);
 			_cryptoSet = true;
 			return;
 		}
@@ -65,8 +73,8 @@ public class PlayerClient : IPlayerClient
 		{
 			try
 			{
-				Logger.Log($"Recieved packetType [{packet.PacketId.ToString()}]", LogLevel.Debug);
-				Logger.Log($"PckData: {Environment.NewLine}{packet.Data.ToFormatedHexString()}", LogLevel.Debug);
+				// Redundant log removed/cleaned up to avoid double spam, or kept if you want specific handler info
+				Logger.Log($"Handling packetType [{packet.PacketId}] via {handler.GetType().Name}", LogLevel.Debug);
 
 				handler.HandlePacket(this, packet);
 				return;
@@ -78,17 +86,23 @@ public class PlayerClient : IPlayerClient
 		}
 		else
 		{
-			Logger.Log($"NOT IMPLEMENTED [{packet.PacketId}]", LogLevel.Warning);
-			Logger.LogPck(packet.Data);
+			Logger.Log($"NOT IMPLEMENTED Packet ID: [{packet.PacketId}]", LogLevel.Warning);
+			Logger.Log($"[RECV] ID: 0x{packet.PacketId:X2} | Len: {packet.Data.Length}{Environment.NewLine}{packet.Data.ToFormatedHexString()}", LogLevel.Debug);
+			// Logger.LogPck(packet.Data); // Redundant thanks to the [RECV RAW] log above
 		}
-		
-
-		//Logger.Log($"Recieved packet of length {packet.Data.Length}: {Environment.NewLine}{packet.Data.ToFormatedHexString()}", LogLevel.Debug);
 	}
 
 	public async Task<bool> Send(byte[] packet, CancellationToken token)
 	{
-		//Logger.Log($"Sending [{((PacketType)BitConverter.ToUInt16(packet, 0))}]", LogLevel.Debug);
+		PaleLogger.Log(true, packet);
+		// --- ADDED LOGGING HERE ---
+		ushort pType = 0;
+		if (packet.Length >= 2)
+			pType = BitConverter.ToUInt16(packet, 0);
+
+		Logger.Log($"[SEND RAW] Type: {((PacketType)pType)} (0x{pType:X4}) | Len: {packet.Length}{Environment.NewLine}{packet.ToFormatedHexString()}", LogLevel.Debug);
+		// --------------------------
+
 		await _socketClient!.Send(packet);
 		return true;
 	}
@@ -139,7 +153,7 @@ public class PlayerClient : IPlayerClient
 		GetSessionInfo()?.Character = CurrentCharacter;
 		Character.SpawnCharacterPacket = new SpawnCharacterPacket()
 		{
-			UserId = CurrentCharacter.Id,			
+			UserId = CurrentCharacter.Id,
 			UserName = CurrentCharacter.Name,
 			Position = CurrentCharacter.Position,
 			ModelId = CurrentCharacter.ModelId,
@@ -198,9 +212,6 @@ public class PlayerClient : IPlayerClient
 		Character.SpawnCharacterPacket?.Position.Position.X = Character.Position.X;
 		Character.SpawnCharacterPacket?.Position.Position.Y = Character.Position.Y;
 		Character.SpawnCharacterPacket?.Position.Direction = Character.Direction;
-
-
-
 
 		Send(Character.SpawnCharacterPacket!.ToBytes(), ct).Wait(ct);
 		Broadcast(Character.SpawnCharacterPacket!.ToBytes(SetAsOther: true), false);
@@ -267,6 +278,8 @@ D0 00 00 00 39 00 00 00 15 59 12 12 00 05 00 05
 00 00 00 00 00 00 00 00 00 00 00 ".ToByteArray(), CancellationToken.None).Wait();
 
 
+		Logger.Log($"[LoadMap] Sending {map.Entities.Count} entity groups for map {map.MapId}-{map.ZoneId}", LogLevel.Information);
+		int entityCount = 0;
 		foreach (var subList in map.Entities)
 		{
 			foreach (var entity in subList.Value)
@@ -279,9 +292,25 @@ D0 00 00 00 39 00 00 00 15 59 12 12 00 05 00 05
 				if (entity[2] == 0x06)
 					continue;
 
+				// Log entity details
+				byte spawnType = entity[2];
+				uint objectId = entity.Length >= 7 ? BitConverter.ToUInt32(entity, 3) : 0;
+				string typeName = spawnType switch
+				{
+					0x00 => "Monster",
+					0x01 => "ExtendedNPC",
+					0x02 => "ZoneNPC",
+					0x04 => "Portal",
+					0x05 => "Reactor",
+					_ => $"Unknown({spawnType:X2})"
+				};
+				Logger.Log($"[LoadMap] Sending {typeName} ObjectId={objectId} Len={entity.Length}", LogLevel.Debug);
+				entityCount++;
+
 				Send(entity, ct).Wait(ct);
 			}
 		}
+		Logger.Log($"[LoadMap] Sent {entityCount} entities total", LogLevel.Information);
 
 		/*
 		foreach (var player in _server.ConnectedPlayers.Values)

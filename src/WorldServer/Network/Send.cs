@@ -6,6 +6,7 @@ using Kakia.TW.World.Managers;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using Yggdrasil.Geometry.Shapes;
 
 namespace Kakia.TW.World.Network
 {
@@ -58,6 +59,35 @@ namespace Kakia.TW.World.Network
 
 			packet.PutByte(attributes);
 			conn.Send(packet);
+		}
+
+		/// <summary>
+		/// Sends environmental update (0x1F 0x04): type, speed, direction, intensity.
+		/// type: 0=off, 1=fog, 2=rain, 3=snow.
+		/// </summary>
+		public static void Environment(WorldConnection conn, byte type, byte speed, byte direction, byte intensity)
+		{
+			var packet = new Packet(Op.EnvironmentResponse);
+			packet.PutByte(0x04);
+			packet.PutByte(type);
+			packet.PutByte(speed);
+			packet.PutByte(direction);
+			packet.PutByte(intensity);
+			conn.Send(packet);
+		}
+
+		/// <summary>
+		/// Broadcasts environmental update to all players on a map.
+		/// </summary>
+		public static void Environment(Map map, byte type, byte speed, byte direction, byte intensity)
+		{
+			var packet = new Packet(Op.EnvironmentResponse);
+			packet.PutByte(0x04);
+			packet.PutByte(type);
+			packet.PutByte(speed);
+			packet.PutByte(direction);
+			packet.PutByte(intensity);
+			BroadcastToMap(map, packet, null);
 		}
 
 		/// <summary>
@@ -164,80 +194,126 @@ namespace Kakia.TW.World.Network
 
 		/// <summary>
 		/// Spawns a Portal.
-		/// Replaces EntitySpawnPacket (Action 0, Type 4)
+		/// Binary format: ObjectId(4) + Unk(1) + X(2) + Unk2(2) + Y(2) + Unk3(2)
 		/// </summary>
-		public static void SpawnPortal(WorldConnection conn, WarpPortal portal)
+		public static void SpawnPortal(WorldConnection conn, Warp portal)
 		{
 			var packet = new Packet(Op.WorldResponse);
 			packet.PutByte((byte)WorldPacketId.Spawn);
-			packet.PutByte((byte)SpawnType.Portal); // Type: Portal
+			packet.PutByte((byte)SpawnType.Portal); // Type: Portal (0x04)
 
-			packet.PutUInt(portal.Id);
-			packet.PutUShort(portal.MinPoint.X); // Visual Pos X
-			packet.PutUShort(portal.MinPoint.Y); // Visual Pos Y
-			packet.PutUShort(portal.DestMapId);
-			packet.PutUShort(portal.DestPortalId);
+			packet.PutUInt(portal.ObjectId);
+			packet.PutUShort(portal.MinX);   // X position
+			packet.PutUShort(portal.MinY);    // Destination Map ID
+			packet.PutUShort(portal.MaxX);   // Y position
+			packet.PutUShort(portal.MaxY); // Destination Portal ID
 
 			conn.Send(packet);
 		}
 
 		/// <summary>
-		/// Spawns an NPC or Monster.
-		/// Replaces EntitySpawnPacket (Action 0, Type 2)
+		/// Spawns an NPC or Monster using Type 0x01 packet structure.
+		/// Binary format: ObjectId(4) + Padding(4) + ModelId(4) + X(2) + Y(2) + Dir(1) + Unk(1) + Long(-1) + Padding(39) + Zeros(3)
 		/// </summary>
-		public static void SpawnNpc(WorldConnection conn, uint objectId, uint npcId, Position pos, Direction direction)
+		public static void SpawnNpc(WorldConnection conn, uint objectId, uint modelId, Position pos, Direction direction)
 		{
 			var packet = new Packet(Op.WorldResponse);
 			packet.PutByte((byte)WorldPacketId.Spawn);
-			packet.PutByte((byte)SpawnType.MonsterNpc); // Type: NPC/Monster
+			packet.PutByte((byte)SpawnType.Npc); // Type 0x01 - correct type for NPCs
 
 			packet.PutUInt(objectId);
-			packet.PutUInt(0); // Unk v3
-
-			packet.PutUInt(0); // Unk v30
-			packet.PutUInt(npcId);
+			packet.PutEmptyBin(4);         // Padding
+			packet.PutUInt(modelId);       // Model/Visual ID
 			packet.PutUShort(pos.X);
 			packet.PutUShort(pos.Y);
 			packet.PutByte((byte)direction);
+			packet.PutByte(0);             // Unknown
+			packet.PutByte(0x0A);          // Unknown constant (10)
+			packet.PutLong(-1);            // Unknown (-1)
+			packet.PutEmptyBin(39);        // Padding
+			packet.PutByte(0);
+			packet.PutByte(0);
+			packet.PutByte(0);
 
 			conn.Send(packet);
 		}
 
-		public static void SpawnHardcoded(WorldConnection conn, Entity entity)
+		/// <summary>
+		/// Spawns an NPC or Monster using Type 0x01 packet structure (Entity overload).
+		/// </summary>
+		public static void SpawnNpc(WorldConnection conn, Entity entity)
+			=> SpawnNpc(conn, entity.ObjectId, entity.ModelId, entity.Position, entity.Direction);
+
+		public static void SpawnMonster(WorldConnection conn, Entity entity)
+			=> SpawnMonster(conn, entity.ObjectId, entity.ModelId, entity.Position, entity.Direction);
+
+		public static void SpawnMonster(WorldConnection conn, uint objectId, uint modelId, Position pos, Direction direction)
 		{
 			var packet = new Packet(Op.WorldResponse);
 			packet.PutByte((byte)WorldPacketId.Spawn);
-			packet.PutByte((byte)SpawnType.Npc); // Type: NPC/Monster
+			packet.PutByte((byte)SpawnType.MonsterNpc);
 
-			packet.PutUInt(entity.ObjectId);
-			packet.PutEmptyBin(4);
-			// 21 9E 63 01 
-			packet.PutUInt(entity.ModelId);
-			packet.PutUShort(entity.Position.X);
-			packet.PutUShort(entity.Position.Y);
-			packet.PutByte((byte)entity.Direction);
-			packet.PutByte(0);
-			packet.PutByte(10); // 0x0A
-			packet.PutLong(-1);
-			packet.PutEmptyBin(39);
-			packet.PutByte(0);
-			packet.PutByte(0);
-			packet.PutByte(0);
+			packet.PutUInt(objectId);
+			packet.PutEmptyBin(8);         // Padding
+			packet.PutUInt(modelId);       // Model/Visual ID
+			packet.PutUShort(pos.X);
+			packet.PutUShort(pos.Y);
+			packet.PutByte((byte)direction);
+			packet.PutByte(0);             // Unknown
+			packet.PutByte(0x0A);          // Unknown constant (10)
+			packet.PutShort(513);
+			packet.PutShort(878);
+			packet.PutShort(513);
+			packet.PutShort(878);
+			packet.PutLong(250);
+			packet.PutLong(250);
+			packet.PutShort(3);
+			packet.PutEmptyBin(38);        // Padding
 
 			conn.Send(packet);
 		}
 
+		/// <summary>
+		/// Spawns a Reactor (interactive object like chest, lever, etc.).
+		/// Binary format: ObjectId(4) + Unk(1) + ReactorId(4) + X(2) + Y(2) + X(2) + Y(2) + trailing bytes
+		/// </summary>
+		public static void SpawnReactor(WorldConnection conn, uint objectId, uint reactorId, Position pos)
+		{
+			var packet = new Packet(Op.WorldResponse);
+			packet.PutByte((byte)WorldPacketId.Spawn);
+			packet.PutByte((byte)SpawnType.Reactor); // Type: Reactor (0x05)
+
+			packet.PutUInt(objectId);
+			packet.PutByte(0);             // Unknown byte between ObjectId and ReactorId
+			packet.PutUInt(reactorId);
+			packet.PutUShort(pos.X);
+			packet.PutUShort(pos.Y);
+			packet.PutUShort(pos.X);       // Position repeated
+			packet.PutUShort(pos.Y);
+			// Trailing data from binary: 4f 00 ff 00 00 00 00 00 00 a8 00 02 00 00 00 00 00 00
+			packet.PutByte(0x4F);          // Unknown (79)
+			packet.PutByte(0x00);
+			packet.PutByte(0xFF);          // Unknown (255)
+			packet.PutByte(0x00);
+			packet.PutEmptyBin(4);         // Zeros
+			packet.PutByte(0x00);
+			packet.PutUShort(0x00A8);      // Unknown (168)
+			packet.PutUShort(0x0002);      // Unknown (2)
+			packet.PutEmptyBin(6);         // Trailing zeros
+
+			conn.Send(packet);
+		}
 		/// <summary>
 		/// Complex SpawnCharacterPacket (Op.CS_MOVEMENT = 0x33, SubOp 0x00 for Spawn)
 		/// Note: The name CS_MOVEMENT in Op.cs for 0x33 is confusing as 0x33 is bi-directional.
 		/// Server->Client 0x33 is Spawn User.
 		/// </summary>
-		public static void SpawnUser(WorldConnection conn, WorldCharacter user, bool isSelf)
+		public static void SpawnUser(WorldConnection conn, uint objectId, WorldCharacter user, bool isSelf)
 		{
 			// Explicit cast because Op.cs might name 0x33 as CS_MOVEMENT
 			var packet = new Packet((Op)0x33);
 			packet.PutByte(0x00); // SubOpcode: Spawn User
-			packet.PutUInt(user.UserId);
+			packet.PutUInt(objectId);
 			packet.PutByte((byte)(isSelf ? 1 : 0));
 
 			// Position & Movement
@@ -617,7 +693,17 @@ namespace Kakia.TW.World.Network
 		/// </summary>
 		public static void OpenShop(WorldConnection conn, uint npcId, NpcShop shop)
 		{
-			// TODO: Implement shop packet structure
+			// 0x6A is used by TW for menu/shop-style UI payloads.
+			var packet = new Packet(Op.Unknown6ARequest);
+			packet.PutByte(0x03); // Subtype: open shop panel
+			packet.PutUInt(npcId);
+			packet.PutString(shop.Name ?? string.Empty, true);
+			packet.PutUShort((ushort)shop.ItemIds.Count);
+			foreach (var itemId in shop.ItemIds)
+			{
+				packet.PutInt(itemId);
+			}
+			conn.Send(packet);
 		}
 
 		/// <summary>
@@ -648,6 +734,37 @@ namespace Kakia.TW.World.Network
 			conn.Send(packet2);
 		}
 
+		public static void LoadCompleteAck(WorldConnection conn)
+		{
+			// Legacy: 4D 00 00 01 01 00 2D CF 94 00 01 00 01 01 00 00 00 00 00 00 00 00 00 00 00 00 00
+			var packet = new Packet(Op.LoadCompleteAck);
+			packet.PutBinFromHex("00 00 01 01 00 2D CF 94 00 01 00 01 01 00 00 00 00 00 00 00 00 00 00 00 00 00");
+			conn.Send(packet);
+
+			// Legacy: 17 00
+			var packet2 = new Packet(Op.DialogResponse);
+			packet2.PutByte(0x00);
+			conn.Send(packet2);
+		}
+
+		/// <summary>
+		/// Sends initial skill data and quickslot/skill bar setup.
+		/// </summary>
+		public static void InitSkills(WorldConnection conn)
+		{
+			var skillList = new Packet(Op.SkillListResponse);
+			skillList.PutBinFromHex(@"00 00 25 00 2D E8 A7 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 2D E8 A7 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00");
+			conn.Send(skillList);
+
+			var skillBar = new Packet((Op)0x51);
+			skillBar.PutBinFromHex(@"02 00 00 15 01 00 00 2D C6 C0 01 01 00 2D C6 C0 01 02 00 2D C6 C0 01 03 00 2D C6 C0 01 04 00 2D C6 C0 01 05 00 2D C6 C0 01 06 00 2D C6 C0 02 00 00 2D C6 C0 02 01 00 2D C6 C0 02 02 00 2D C6 C0 02 03 00 2D C6 C0 02 04 00 2D C6 C0 02 05 00 2D C6 C0 02 06 00 2D C6 C0 03 00 00 2D C6 C0 03 01 00 2D C6 C0 03 02 00 2D C6 C0 03 03 00 2D C6 C0 03 04 00 2D C6 C0 03 05 00 2D C6 C0 03 06 00 2D C6 C0");
+			conn.Send(skillBar);
+
+			var skillBarEnable = new Packet((Op)0x51);
+			skillBarEnable.PutBinFromHex("02 01 01 00");
+			conn.Send(skillBarEnable);
+		}
+
 		/// <summary>
 		/// Sends attack result to the client.
 		/// </summary>
@@ -665,6 +782,29 @@ namespace Kakia.TW.World.Network
 			packet2.PutByte(0x03);
 			packet2.PutByte(0xE7);
 			conn.Send(packet2);
+		}
+
+		/// <summary>
+		/// Sends target lock/attack-start packet (legacy 0x3F flow).
+		/// </summary>
+		public static void AttackTarget(WorldConnection conn, uint targetId)
+		{
+			var packet = new Packet(Op.AttackTargetResponse);
+			packet.PutByte(0x00);
+			packet.PutUInt(targetId);
+			packet.PutBinFromHex(@"72 01 00 2D D4 9E 03 E0 02 B4 25 4C 32 50 00 00 00 00 00 00 00 64 00");
+			conn.Send(packet);
+		}
+
+		/// <summary>
+		/// Acknowledges target selection (legacy: 11 [entityId] 02).
+		/// </summary>
+		public static void TargetEntity(WorldConnection conn, uint entityId)
+		{
+			var packet = new Packet(Op.DirectionUpdateRequest);
+			packet.PutUInt(entityId);
+			packet.PutByte(0x02);
+			conn.Send(packet);
 		}
 
 		/// <summary>
@@ -768,9 +908,11 @@ namespace Kakia.TW.World.Network
 			packet.PutLong(user.NextExp);       // 00 00 00 00 00 00 00 64
 			packet.PutLong(user.LimitExp);      // 00 00 00 00 00 00 00 FA
 
-			packet.PutShort((short)user.StatPoints);     // 00 01
+			// -- Rune Info --
+			packet.PutShort(user.RuneLevel);
+			packet.PutInt(user.RuneExp);
+			packet.PutInt(user.RuneMaxExp);
 
-			packet.PutLong(10000);  // 00 00 00 00 00 00 27 10
 			packet.PutLong(user.CurrentHP);    // 00 00 00 00 00 00 01 27
 
 			packet.PutByte(0); // 00

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Kakia.TW.World.Entities;
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
@@ -45,6 +46,33 @@ namespace Kakia.TW.World.Managers
 					break;
 			}
 			return player != null;
+		}
+
+		/// <summary>
+		/// Tries to find a player by their character name.
+		/// </summary>
+		public bool TryGetPlayerByName(string name, out Player? player)
+		{
+			player = default;
+			foreach (var map in _maps.Values)
+			{
+				if (map.TryGetPlayerByName(name, out player))
+					break;
+			}
+			return player != null;
+		}
+
+		/// <summary>
+		/// Gets the total number of players across all maps.
+		/// </summary>
+		public int GetPlayerCount()
+		{
+			var count = 0;
+			foreach (var map in _maps.Values)
+			{
+				count += map.GetPlayerCount();
+			}
+			return count;
 		}
 
 		/// <summary>

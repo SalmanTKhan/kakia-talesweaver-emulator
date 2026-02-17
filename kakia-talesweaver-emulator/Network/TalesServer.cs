@@ -1,4 +1,5 @@
 ﻿using kakia_talesweaver_emulator.Models;
+using kakia_talesweaver_logging;
 using kakia_talesweaver_network;
 using kakia_talesweaver_packets.Models;
 using kakia_talesweaver_packets.Packets;
@@ -38,18 +39,24 @@ public class TalesServer : SocketServer
 		var maps = Directory.GetDirectories("Maps");
 
 
+		Logger.Log($"[TalesServer] Loading maps from 'Maps' directory...", LogLevel.Information);
 		foreach (var map in maps)
 		{
 			var zones = Directory.GetDirectories(map);
 			foreach (var zone in zones)
-		{
+			{
 				var mapInfo = new MapInfo(zone);
 				string key = $"{mapInfo.MapId}-{mapInfo.ZoneId}";
 
 				if (!Maps.ContainsKey(key))
+				{
 					Maps.Add(key, mapInfo);
+					int totalEntities = mapInfo.Entities.Values.Sum(list => list.Count);
+					Logger.Log($"[TalesServer] Loaded map {key}: {totalEntities} entities ({string.Join(", ", mapInfo.Entities.Select(kv => $"Type{kv.Key:X2}={kv.Value.Count}"))})", LogLevel.Information);
+				}
 			}
 		}
+		Logger.Log($"[TalesServer] Loaded {Maps.Count} maps total", LogLevel.Information);
 	}
 
 	public override void OnConnect(SocketClient s)
