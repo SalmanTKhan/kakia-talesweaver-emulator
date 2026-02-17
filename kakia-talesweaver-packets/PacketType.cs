@@ -21,7 +21,9 @@ public enum PacketType : byte
 	SetPose = 0x32, // Sit/Stand, others?
 	Movement = 0x33,
 	ClickedEntity = 0x43,
+	TargetEntity = 0x59,
 	Login = 0x66,
 	ServerSelect = 0x67,
-	NpcPickedDialogAnswer = 0x6C
+	NpcPickedDialogAnswer = 0x6C,
+	Ping = 0x75
 }

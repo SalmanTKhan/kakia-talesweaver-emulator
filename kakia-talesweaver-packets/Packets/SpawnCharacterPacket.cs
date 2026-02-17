@@ -15,14 +15,16 @@ public class SpawnCharacterPacket
 	// Main identifier used in parser
 	public uint UserId { get; set; }
 	public bool IsThisPlayer { get; set; }
-	public byte GM { get; set; } = 0;
+	public byte WalkRun { get; set; } = 0;
 	public byte UnkByte1 { get; set; } = 0;
 	public short UnkShort1 { get; set; } = 0;
 	public ObjectPos Position { get; set; } = new();
-	public byte Unk { get; set; }
+	public byte PrevPos { get; set; }
 
 	// Basic stats block
 	public BasicStatsBlock BasicStats { get; set; } = new();
+
+	public byte GM { get; set; }
 
 	// Name (1-byte length prefixed in the protocol)
 	public string UserName { get; set; } = string.Empty;
@@ -83,7 +85,7 @@ public class SpawnCharacterPacket
 		public ushort UnknownStat1 { get; set; }
 		public ushort UnknownStat2 { get; set; }
 		public ushort UnknownStat3 { get; set; }
-		public ushort UnknownStat4 { get; set; }
+		public byte UnknownStat4 { get; set; }
 	}
 
 	public class GuildTeamInfo
@@ -209,19 +211,21 @@ public class SpawnCharacterPacket
 
 		// --- spawn user payload ---
 		// Movement
-		pw.Write(GM);
+		pw.Write(WalkRun);
 		pw.Write(UnkByte1);
 		pw.Write(UnkShort1);
 		pw.Write(Position.ToBytes());
-		pw.Write(Unk);
+		pw.Write(PrevPos);
 
 		// Basic stats
-		pw.Write(BasicStats.UnknownFlag1);
+		pw.Write((byte)0x0);
 		pw.Write(BasicStats.UnknownFlag2);
 		pw.Write(BasicStats.UnknownStat1);
 		pw.Write(BasicStats.UnknownStat2);
 		pw.Write(BasicStats.UnknownStat3);
 		pw.Write(BasicStats.UnknownStat4);
+
+		pw.Write(GM);
 
 		// UserName (1-byte length-prefixed, latin-1)
 		_pack_string(pw, UserName);
@@ -465,13 +469,13 @@ public class SpawnCharacterPacket
 			packet.IsThisPlayer = reader.ReadByte() != 0;
 
 			// Movement
-			packet.GM = reader.ReadByte();
+			packet.WalkRun = reader.ReadByte();
 			packet.UnkByte1 = reader.ReadByte();
 			packet.UnkShort1 = reader.ReadInt16BE();
 			packet.Position.Position.X = reader.ReadUInt16BE();
 			packet.Position.Position.Y = reader.ReadUInt16BE();
 			packet.Position.Direction = reader.ReadByte();
-			packet.Unk = reader.ReadByte();
+			packet.PrevPos = reader.ReadByte();
 
 			// Basic stats
 			packet.BasicStats.UnknownFlag1 = reader.ReadByte();
@@ -479,7 +483,9 @@ public class SpawnCharacterPacket
 			packet.BasicStats.UnknownStat1 = reader.ReadUInt16BE();
 			packet.BasicStats.UnknownStat2 = reader.ReadUInt16BE();
 			packet.BasicStats.UnknownStat3 = reader.ReadUInt16BE();
-			packet.BasicStats.UnknownStat4 = reader.ReadUInt16BE();
+			packet.BasicStats.UnknownStat4 = reader.ReadByte();
+
+			packet.GM = reader.ReadByte();
 
 			// UserName
 			packet.UserName = ReadPrefixedStringLatin1(reader);

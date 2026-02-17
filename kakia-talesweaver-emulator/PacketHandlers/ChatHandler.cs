@@ -78,6 +78,25 @@ public class ChatHandler : PacketHandler
 				client.Send(character.SpawnCharacterPacket!.ToBytes(), CancellationToken.None).Wait();
 				break;
 
+			case "@resync":
+				{
+					foreach (var player in client.GetServer().ConnectedPlayers.Values)
+					{
+						if (player == this || string.IsNullOrEmpty(player.GetCharacter().Name))
+							continue;
+						if (!player.InMap(client.GetCurrentMap()))
+							continue;
+
+						var otherCharacter = player.GetCharacter();
+						if (otherCharacter.SpawnCharacterPacket is null)
+							continue;
+
+						client.Send(otherCharacter
+							.SpawnCharacterPacket
+							.ToBytes(SetAsOther: true), CancellationToken.None).Wait();
+					}
+				}
+				break;
 			default:
 				break;
 		}

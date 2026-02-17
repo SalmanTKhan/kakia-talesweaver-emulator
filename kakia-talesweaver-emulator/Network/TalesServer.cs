@@ -67,11 +67,13 @@ public class TalesServer : SocketServer
 		ConnectedPlayers.AddOrUpdate(Guid.NewGuid().ToString(), pc, (_, _) => pc);
 	}
 
-	public void Broadcast(IPlayerClient sender, byte[] data, bool includeSelf, CancellationToken ct)
+	public void Broadcast(IPlayerClient sender, byte[] data, bool includeSelf, bool sameMap, CancellationToken ct)
 	{
 		foreach (var player in ConnectedPlayers.Values)
 		{
 			if ((!includeSelf && player == sender) || player.GetServerType() != ServerType.World)
+				continue;
+			if (sameMap && !player.InMap(sender.GetCurrentMap()))
 				continue;
 
 			player.Send(data, ct).Wait(ct);

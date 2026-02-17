@@ -26,7 +26,7 @@ public class MovementHandler : PacketHandler
 			{
 				ObjectID = character.Id,
 				MoveType = movement.MoveType,
-				MoveSpeed = (byte)(movement.MoveType == MovementType.Run ? 27 : 15),
+				MoveSpeed = 50, //(byte)(movement.MoveType == MovementType.Run ? 27 : 15),
 				PreviousPosition = character.Position,
 				TargetPosition = movement.Position,
 				Direction = movement.Direction
@@ -41,7 +41,10 @@ public class MovementHandler : PacketHandler
 
 		if (movement.Flag == MovementFlag.InitialRequest) return;
 
-		var map = client.GetCurrentMap();
+		var mapId = client.GetCurrentMap();
+		if (mapId == null) return;
+
+		TalesServer.Maps.TryGetValue(mapId.ToString(), out var map);
 		if (map is not null)
 		{
 			var portal = map.EnteredPortal(movement.Position);

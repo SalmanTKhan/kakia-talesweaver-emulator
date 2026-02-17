@@ -1,5 +1,7 @@
 ﻿using kakia_talesweaver_network.Cryptography;
+using kakia_talesweaver_utils;
 using System.Buffers.Binary;
+using System.Reflection.Metadata.Ecma335;
 
 namespace kakia_talesweaver_network;
 
@@ -12,6 +14,8 @@ public class RawPacket
 	{
 		Data = data;
 	}
+
+	public PacketReader GetReader() => new(Data);
 
 	public static List<RawPacket> ParsePackets(byte[] buffer, CryptoHandler cryptoHandler)
 	{
