@@ -640,8 +640,8 @@ namespace Kakia.TW.World.Commands
 
 			if (target.Connection != null)
 			{
-				Send.CharEffect(target.Connection, target.ObjectId, effectId);
-				Msg(sender, $"Played effect {effectId} on {target.Data.Name}.");
+				Send.CharEffect(target.Connection, target.ObjectId, (CharEffect)effectId);
+				Msg(sender, $"Played effect {(CharEffect)effectId} on {target.Data.Name}.");
 			}
 			return CommandResult.Okay;
 		}
@@ -664,7 +664,7 @@ namespace Kakia.TW.World.Commands
 			if (target.Connection != null)
 			{
 				Send.StatUpdate(target.Connection, target.Data);
-				Send.CharEffect(target.Connection, target.ObjectId, 1); // Level up effect
+				Send.CharEffect(target.Connection, target.ObjectId, CharEffect.LevelUp); // Level up effect
 			}
 
 			return CommandResult.Okay;

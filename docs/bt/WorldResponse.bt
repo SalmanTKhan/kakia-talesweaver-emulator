@@ -28,24 +28,21 @@ if (action == Object) {
             uint unkV3;
             uint unkV30;
             uint modelId <comment="NPC/Monster model ID">;
-            Position pos;
+            Position pos; // (889, 391)
             ubyte direction;
-            short s1;
-            short s2;
-            short s3;
-            short s4;
-            short s5;
-            int64 l1;
-            int64 l2;
-            short s6;
-            byte bin[38];
+            short s1; // 8 or 10
+            Position pos1; // (889, 391)
+            Position pos2; // (889, 391)
+            int64 currentHp; // 274
+            int64 maxHp; // 274
+            short level; // 4
+            byte bin[38]; // When s1 = 10, this became 39
             break;
 
         case Portal:
-            uint portalId;
-            Position pos;
-            ushort destMapId;
-            ushort destPortalId <comment="Visual portal ID">;
+            uint objectId;
+            Position pos1;
+            Position pos2;
             break;
 
         case Player:

@@ -748,7 +748,7 @@ namespace Kakia.TW.World.Network
 		}
 
 		/// <summary>
-		/// Sends initial skill data and quickslot/skill bar setup.
+		/// Sends initial skill data and quickslot/skill bar setup. 
 		/// </summary>
 		public static void InitSkills(WorldConnection conn)
 		{
@@ -776,12 +776,27 @@ namespace Kakia.TW.World.Network
 			packet.PutUInt(characterId);
 			packet.PutByte(0xFF);
 			conn.Send(packet);
+		}
 
-			// Legacy: 6C 03 E7 - Using raw opcode as this is a special case
-			var packet2 = new Packet((Op)0x6C);
-			packet2.PutByte(0x03);
-			packet2.PutByte(0xE7);
-			conn.Send(packet2);
+		/// <summary>
+		/// Sends the current server time to the client (0x66).
+		/// </summary>
+		public static void CurrentTime(WorldConnection conn)
+		{
+			var packet = new Packet((Op)0x66);
+			packet.PutUInt((uint)DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+			conn.Send(packet);
+		}
+
+		/// <summary>
+		/// Sends environmental mana to the client (0x6C 03 E7 = 999 mana, hardcoded).
+		/// </summary>
+		public static void EnvironmentalMana(WorldConnection conn)
+		{
+			var packet = new Packet((Op)0x6C);
+			packet.PutByte(0x03);
+			packet.PutByte(0xE7);
+			conn.Send(packet);
 		}
 
 		/// <summary>
@@ -995,12 +1010,12 @@ namespace Kakia.TW.World.Network
 		/// <summary>
 		/// Sends a character effect (level up, max level, pvp countdown, etc.).
 		/// </summary>
-		public static void CharEffect(WorldConnection conn, uint objectId, byte effect)
+		public static void CharEffect(WorldConnection conn, uint objectId, CharEffect effect)
 		{
 			// Effect codes: 0x01 = LevelUp, 0x02 = MaxLevel, etc.
 			var packet = new Packet(Op.CharEffectResponse);
 			packet.PutUInt(objectId);
-			packet.PutByte(effect);
+			packet.PutByte((byte)effect);
 			conn.Send(packet);
 		}
 

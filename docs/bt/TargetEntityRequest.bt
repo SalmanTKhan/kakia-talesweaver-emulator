@@ -1,0 +1,16 @@
+//------------------------------------------------
+//   Op: 0x59 (TargetEntityRequest)
+//   Dir: Client -> Server
+//   Handler: WorldServer/PacketHandler.cs - TargetEntity()
+//------------------------------------------------
+#include "inc/common.bt"
+
+TwHeader header;
+
+ubyte subType <format=hex, comment="Target action subtype">;
+uint entityId <format=hex, comment="Selected target object ID">;
+
+local int remaining = FileSize() - FTell();
+if (remaining > 0) {
+    ubyte tail[remaining] <bgcolor=cLtGray, comment="Unknown/optional fields">;
+}

@@ -131,10 +131,7 @@ namespace Kakia.TW.World.Managers
 		{
 			// 1. Update Players
 			foreach (var p in _players.Values)
-			{
 				p.Update(elapsed);
-				CheckWarpCollision(p); // Check if player walked into a portal
-			}
 
 			// 2. Update Monsters
 			foreach (var m in _monsters.Values) m.Update(elapsed);

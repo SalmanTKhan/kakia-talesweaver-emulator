@@ -76,7 +76,7 @@ namespace Kakia.TW.Shared.Network
 		AttackResultResponse = 0x48,
 		LoginResponse = 0x50,
 		ServerListResponse = 0x56,
-		CharEffectResponse = 0x5C,
+		CharEffectResponse = 0x1A,
 		CharacterSelectListResponse = 0x6B,
 		CreateCharacterResponse = 0x7C,
 		ConnectedResponse = 0x7E,
@@ -149,7 +149,7 @@ namespace Kakia.TW.Shared.Network
 	}
 
 	/// <summary>
-	/// Represents sub-actions for the CharacterAction packet.
+	/// Represents sub-actions for the CharacterAction (0x1B) packet.
 	/// </summary>
 	public enum CharacterActionType : byte
 	{
@@ -161,7 +161,7 @@ namespace Kakia.TW.Shared.Network
 	}
 
 	/// <summary>
-	/// Represents sub-actions for the RemoveAction packet.
+	/// Represents sub-actions for the RemoveAction (0x1C) packet.
 	/// </summary>
 	public enum RemoveActionType : byte
 	{
@@ -173,7 +173,7 @@ namespace Kakia.TW.Shared.Network
 	}
 
 	/// <summary>
-	/// Represents sub-actions for the QuestInfo packet.
+	/// Represents sub-actions for the QuestInfo (0x18) packet.
 	/// </summary>
 	public enum QuestActionType : byte
 	{
@@ -182,7 +182,7 @@ namespace Kakia.TW.Shared.Network
 	}
 
 	/// <summary>
-	/// Represents sub-actions for the MapPing packet.
+	/// Represents sub-actions for the MapPing (0x19) packet.
 	/// </summary>
 	public enum MapPingActionType : byte
 	{
@@ -191,7 +191,7 @@ namespace Kakia.TW.Shared.Network
 	}
 
 	/// <summary>
-	/// Represents sub-actions for the ObjectInteraction packet.
+	/// Represents sub-actions for the ObjectInteraction (0x49) packet.
 	/// </summary>
 	public enum ObjectInteractionType : byte
 	{
@@ -205,7 +205,7 @@ namespace Kakia.TW.Shared.Network
 	}
 
 	/// <summary>
-	/// Represents sub-actions for the OpenMarket packet.
+	/// Represents sub-actions for the OpenMarket (0x4B) packet.
 	/// </summary>
 	public enum MarketActionType : byte
 	{
@@ -229,7 +229,7 @@ namespace Kakia.TW.Shared.Network
 	}
 
 	/// <summary>
-	/// Represents sub-actions for the InventoryAction packet.
+	/// Represents sub-actions for the InventoryAction (0x5F) packet.
 	/// </summary>
 	public enum InventoryActionType : byte
 	{
@@ -271,5 +271,17 @@ namespace Kakia.TW.Shared.Network
 		NumberInput1 = 0,
 		NumberInput2 = 1,
 		HasOptions = 2,
+	}
+
+	public enum CharEffect : byte
+	{
+		None,
+		LevelUp,
+		ExpOver,
+		TeleportEffect1,
+		TeleportEffect2,
+		ClubLevelUp,
+		PvpCountDownTimer,
+		MaxLevel
 	}
 }

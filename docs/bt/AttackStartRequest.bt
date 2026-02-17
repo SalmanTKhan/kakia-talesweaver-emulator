@@ -1,0 +1,17 @@
+//------------------------------------------------
+//   Op: 0x13 (AttackStart)
+//   Dir: Client -> Server
+//   Handler: WorldServer/PacketHandler.cs - AttackStart()
+//------------------------------------------------
+#include "inc/common.bt"
+
+TwHeader header;
+
+// Observed request shape (legacy): 6 unknown bytes then target object ID.
+ubyte prefix[6] <bgcolor=cLtGray, comment="Unknown/attack context">;
+uint targetId <format=hex, comment="Primary target object ID">;
+
+local int remaining = FileSize() - FTell();
+if (remaining > 0) {
+    ubyte tail[remaining] <bgcolor=cLtGray, comment="Unknown trailing bytes">;
+}

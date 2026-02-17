@@ -1,0 +1,18 @@
+//------------------------------------------------
+//   Op: 0x16 (SkillListResponse)
+//   Dir: Server -> Client
+//   Send: WorldServer/Send.cs - InitSkills()
+//------------------------------------------------
+#include "inc/common.bt"
+
+TwHeader header;
+
+// Current implementation uses hardcoded payload from legacy captures.
+ubyte subType <format=hex, comment="Expected 0x00">;
+ubyte unk1 <format=hex>;
+ushort skillGroupCount <format=hex>;
+
+local int remaining = FileSize() - FTell();
+if (remaining > 0) {
+    ubyte rawSkillData[remaining] <bgcolor=cLtGray, comment="Unknown skill payload blob">;
+}

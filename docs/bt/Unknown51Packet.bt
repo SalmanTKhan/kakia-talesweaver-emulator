@@ -1,0 +1,15 @@
+//------------------------------------------------
+//   Op: 0x51 (Unknown51Request/Skill bar payload)
+//   Dir: Both
+//   Send: WorldServer/Send.cs - InitSkills()
+//------------------------------------------------
+#include "inc/common.bt"
+
+TwHeader header;
+
+ubyte subType <format=hex, comment="Observed 0x02 in skill bar packets">;
+
+local int remaining = FileSize() - FTell();
+if (remaining > 0) {
+    ubyte payload[remaining] <bgcolor=cLtGray, comment="Skill bar / quickslot raw data">;
+}

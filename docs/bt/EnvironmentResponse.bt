@@ -1,0 +1,19 @@
+//------------------------------------------------
+//   Op: 0x1F (EnvironmentResponse)
+//   Dir: Server -> Client
+//   Send: WorldServer/Send.cs - Environment()
+//------------------------------------------------
+#include "inc/common.bt"
+
+TwHeader header;
+
+ubyte subType <format=hex, comment="Expected 0x04 for weather/environment">;
+ubyte environmentType <comment="0=off, 1=fog, 2=rain, 3=snow">;
+ubyte speed;
+ubyte direction;
+ubyte intensity;
+
+local int remaining = FileSize() - FTell();
+if (remaining > 0) {
+    ubyte tail[remaining] <bgcolor=cLtGray, comment="Unknown/unused bytes">;
+}

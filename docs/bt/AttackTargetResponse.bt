@@ -1,0 +1,30 @@
+//------------------------------------------------
+//   Op: 0x3F (AttackTargetResponse)
+//   Dir: Server -> Client
+//   Send: WorldServer/Send.cs - AttackTarget()
+//------------------------------------------------
+#include "inc/common.bt"
+
+TwHeader header;
+
+uint targetId <format=hex, comment="Target object ID">;
+
+// Legacy hardcoded combat payload follows.
+ubyte nestedOp <format=hex, comment="Expected 0x3F">;
+ubyte unk1;
+uint unkTargetRef <format=hex>;
+uint attackerId <format=hex>;
+ubyte hitFlag;
+uint unk2 <format=hex>;
+ushort unk3 <format=hex>;
+ubyte unk4;
+uint unk5 <format=hex>;
+uint unk6 <format=hex>;
+ubyte unk7;
+uint damageLike <comment="Often 100 in current implementation">;
+ubyte unk8;
+
+local int remaining = FileSize() - FTell();
+if (remaining > 0) {
+    ubyte tail[remaining] <bgcolor=cLtGray, comment="Unknown trailing bytes">;
+}

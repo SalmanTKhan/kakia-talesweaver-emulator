@@ -3,7 +3,6 @@ using Kakia.TW.Shared.World;
 using Kakia.TW.World.Entities;
 using Kakia.TW.World.Scripting;
 using System;
-using System.Numerics;
 using System.Threading.Tasks;
 using Yggdrasil.Logging;
 
@@ -135,6 +134,8 @@ namespace Kakia.TW.World.Network
 
 				// 7. Send InitObjectId (0x33 subtype 0x01) using map-assigned ObjectId
 				Send.InitObjectId(conn, conn.Player.ObjectId);
+				Send.CurrentTime(conn);
+				Send.EnvironmentalMana(conn);
 
 				// 8. Finished loading
 				Send.LoadCompleteAck(conn);
@@ -171,75 +172,23 @@ namespace Kakia.TW.World.Network
 		[PacketHandler(Op.MovementRequest)] // 0x33
 		public void MovementRequest(WorldConnection conn, Packet packet)
 		{
+			if (conn.Player == null) return;
+
 			// Packet: [Flag:1] [Type:1] [X:2] [Y:2] [Dir:1 (Optional)]
 			byte flag = packet.GetByte();
 
-			if (flag == 0x00) // Initial Request
+			if (flag == 0x00) // InitialRequest — do NOT check portal (player hasn't walked there yet)
 			{
 				byte moveType = packet.GetByte();
 				ushort x = packet.GetUShort();
 				ushort y = packet.GetUShort();
-
-				// Fix: Check if Direction byte exists before reading
-				byte dir = (byte)(conn.Player?.Direction ?? 0);
-				if (packet.Length > 7)
-				{
-					dir = packet.GetByte();
-				}
-
-				// Update Server State
-				if (conn.Player != null)
-				{
-					var previousX = conn.Player.Position.X;
-					var previousY = conn.Player.Position.Y;
-
-					conn.Player.Position = new Position(x, y);
-					conn.Player.Direction = (Direction)dir;
-					conn.Player.Data.X = x;
-					conn.Player.Data.Y = y;
-					conn.Player.Data.Direction = (Direction)dir;
-
-					// Broadcast movement to other players
-					if (conn.Player.Instance != null)
-					{
-						Send.MoveObject(conn.Player.Instance, conn.Player.ObjectId, moveType, previousX, previousY, x, y, dir);
-					}
-
-					// Check portal collision for movement packets that don't send continuation updates.
-					CheckPortalCollision(conn);
-				}
+				byte dir = packet.Length > 7 ? packet.GetByte() : (byte)conn.Player.Direction;
+				conn.Player.Movement.StartMoving(moveType, x, y, dir);
 			}
-			else if (flag == 0x01) // Continuation/Update
+			else if (flag == 0x01) // Continuation — position sync, check portal
 			{
-				// Position sync during movement
-				if (conn.Player != null && packet.Length >= 5)
-				{
-					ushort x = packet.GetUShort();
-					ushort y = packet.GetUShort();
-
-					conn.Player.Position = new Position(x, y);
-					conn.Player.Data.X = x;
-					conn.Player.Data.Y = y;
-
-					// Check for portal collision after movement update
-					CheckPortalCollision(conn);
-				}
-			}
-		}
-
-		private void CheckPortalCollision(WorldConnection conn)
-		{
-			if (conn.Player?.Instance == null) return;
-
-			var portal = conn.Player.Instance.FindPortalAt(
-				conn.Player.Position.X,
-				conn.Player.Position.Y
-			);
-
-			if (portal != null)
-			{
-				Log.Info($"Player {conn.Username} touched portal {portal.ObjectId} -> Map {portal.DestMapId}-{portal.DestZoneId}");
-				conn.Player.Warp(portal.DestMapId, portal.DestZoneId, portal.DestX, portal.DestY);
+				if (packet.Length >= 5)
+					conn.Player.Movement.UpdatePosition(packet.GetUShort(), packet.GetUShort());
 			}
 		}
 
